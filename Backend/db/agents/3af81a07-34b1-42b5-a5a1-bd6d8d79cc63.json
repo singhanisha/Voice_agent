@@ -1,0 +1,229 @@
+{
+  "agent_name": "Indic-Test",
+  "voice_id": "11labs-06nek6zjTCD1vCbtc8bc",
+  "conversation_flow_id": "flowv2_7d597c9fe53d",
+  "global_prompt": "You are an education counselling voice agent.\n\nPrimary goal:\nUnderstand the student's course interest and connect them with the right counsellor.\n\nConversation style:\nBe encouraging, patient, and clear. Ask one question at a time. Support parents and students without sounding pushy.\n\nDiscovery questions:\n1. Ask which course, program, exam, or career path they are interested in.\n2. Ask current education level.\n3. Ask preferred city, online/offline preference, and timeline.\n4. Ask budget or fee range only if the conversation naturally allows it.\n5. Ask whether a counsellor should call back.\n\nRules:\nDo not guarantee admission, scholarship, visa approval, placement, or exam results.\n\nFinal outcome:\nSummarize the student requirement and confirm the counselling follow-up.\n\nWebsite intelligence source: https://godrejssarjapur.com/godrej-bangalore/.\nVerified business name: Godrej Sarjapur Bangalore.\nRelevant website sections found: contact; home.\nVerified products/services: Master Plan Layout; Unit Plan Layout; Intellectual Property Rights; Property Information Disclaimer.\nWebsite-backed value points: I understand and acknowledge that the project I am interested in hasn't yet secured RERA clearance.; I understand and acknowledge that the project I am interested in hasn't yet secured RERA clearance.; I understand and acknowledge that the project I am interested in hasn't yet secured RERA clearance..\nQualification questions to collect: Which service are you most interested in?; When are you planning to make a decision?.\nObjection guidance: price_concern: Acknowledge budget concern and offer to match options to their range.; needs_time: Offer a short follow-up slot instead of pressuring the caller..\nUse only verified website facts and keep unsupported claims out of the call.",
+  "conversationFlow": {
+    "conversation_flow_id": "flowv2_7d597c9fe53d",
+    "version": 2,
+    "schema_version": "2.0",
+    "global_prompt": "You are an education counselling voice agent.\n\nPrimary goal:\nUnderstand the student's course interest and connect them with the right counsellor.\n\nConversation style:\nBe encouraging, patient, and clear. Ask one question at a time. Support parents and students without sounding pushy.\n\nDiscovery questions:\n1. Ask which course, program, exam, or career path they are interested in.\n2. Ask current education level.\n3. Ask preferred city, online/offline preference, and timeline.\n4. Ask budget or fee range only if the conversation naturally allows it.\n5. Ask whether a counsellor should call back.\n\nRules:\nDo not guarantee admission, scholarship, visa approval, placement, or exam results.\n\nFinal outcome:\nSummarize the student requirement and confirm the counselling follow-up.\n\nWebsite intelligence source: https://godrejssarjapur.com/godrej-bangalore/.\nVerified business name: Godrej Sarjapur Bangalore.\nRelevant website sections found: contact; home.\nVerified products/services: Master Plan Layout; Unit Plan Layout; Intellectual Property Rights; Property Information Disclaimer.\nWebsite-backed value points: I understand and acknowledge that the project I am interested in hasn't yet secured RERA clearance.; I understand and acknowledge that the project I am interested in hasn't yet secured RERA clearance.; I understand and acknowledge that the project I am interested in hasn't yet secured RERA clearance..\nQualification questions to collect: Which service are you most interested in?; When are you planning to make a decision?.\nObjection guidance: price_concern: Acknowledge budget concern and offer to match options to their range.; needs_time: Offer a short follow-up slot instead of pressuring the caller..\nUse only verified website facts and keep unsupported claims out of the call.",
+    "start_node_id": "start",
+    "nodes": [
+      {
+        "id": "start",
+        "name": "Greeting",
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Follow the published Flow V2 node 'Greeting' and keep the reply concise."
+        },
+        "response": "Hello, this is Indic-Test. Am I speaking with {{name}}?",
+        "edges": [
+          {
+            "id": "edge_start_1_discovery",
+            "condition": "confirm",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "confirm"
+            },
+            "destination_node_id": "discovery"
+          },
+          {
+            "id": "edge_start_2_end",
+            "condition": "deny",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "deny"
+            },
+            "destination_node_id": "end"
+          },
+          {
+            "id": "edge_start_3_fallback",
+            "condition": "unclear",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "unclear"
+            },
+            "destination_node_id": "fallback"
+          }
+        ],
+        "start_speaker": "agent",
+        "intent_triggers": [
+          "call_connected"
+        ]
+      },
+      {
+        "id": "discovery",
+        "name": "Discovery",
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Follow the published Flow V2 node 'Discovery' and keep the reply concise."
+        },
+        "response": "Could you share a little about what you are looking for?",
+        "edges": [
+          {
+            "id": "edge_discovery_1_confirm_followup",
+            "condition": "provide info",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "provide info"
+            },
+            "destination_node_id": "confirm_followup"
+          },
+          {
+            "id": "edge_discovery_2_confirm_followup",
+            "condition": "confirm",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "confirm"
+            },
+            "destination_node_id": "confirm_followup"
+          },
+          {
+            "id": "edge_discovery_3_fallback",
+            "condition": "unclear",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "unclear"
+            },
+            "destination_node_id": "fallback"
+          }
+        ],
+        "intent_triggers": [
+          "confirm",
+          "provide_info"
+        ],
+        "collects": [
+          "interested",
+          "course_interest",
+          "education_level",
+          "city",
+          "budget",
+          "callback"
+        ]
+      },
+      {
+        "id": "fallback",
+        "name": "Clarify",
+        "type": "fallback",
+        "instruction": {
+          "type": "prompt",
+          "text": "Follow the published Flow V2 node 'Clarify' and keep the reply concise."
+        },
+        "response": "Sorry, I did not catch that clearly. Could you repeat it once?",
+        "edges": [
+          {
+            "id": "edge_fallback_1_discovery",
+            "condition": "provide info",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "provide info"
+            },
+            "destination_node_id": "discovery"
+          },
+          {
+            "id": "edge_fallback_2_discovery",
+            "condition": "confirm",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "confirm"
+            },
+            "destination_node_id": "discovery"
+          },
+          {
+            "id": "edge_fallback_3_end",
+            "condition": "deny",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "deny"
+            },
+            "destination_node_id": "end"
+          }
+        ],
+        "intent_triggers": [
+          "unclear"
+        ],
+        "fallback": {
+          "max_attempts": 2,
+          "escalation_target": "end"
+        }
+      },
+      {
+        "id": "confirm_followup",
+        "name": "Confirm Follow-up",
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Follow the published Flow V2 node 'Confirm Follow-up' and keep the reply concise."
+        },
+        "response": "Thanks. I will have the team follow up with the right details.",
+        "edges": [
+          {
+            "id": "edge_confirm_followup_1_end",
+            "condition": "confirm",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "confirm"
+            },
+            "destination_node_id": "end"
+          },
+          {
+            "id": "edge_confirm_followup_2_end",
+            "condition": "deny",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "deny"
+            },
+            "destination_node_id": "end"
+          },
+          {
+            "id": "edge_confirm_followup_3_fallback",
+            "condition": "unclear",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "unclear"
+            },
+            "destination_node_id": "fallback"
+          }
+        ],
+        "intent_triggers": [
+          "confirm",
+          "provide_info"
+        ]
+      },
+      {
+        "id": "end",
+        "name": "End",
+        "type": "end",
+        "instruction": {
+          "type": "prompt",
+          "text": "Follow the published Flow V2 node 'End' and keep the reply concise."
+        },
+        "response": "Thank you. Have a good day.",
+        "edges": [],
+        "intent_triggers": [
+          "confirm",
+          "deny"
+        ]
+      }
+    ]
+  },
+  "provider_config": {
+    "stt_provider": "groq",
+    "tts_provider": "edge",
+    "cartesia_voice_id": "95d51f79-c397-46f9-b49a-23763d3eaa2d"
+  },
+  "agent_metadata": {
+    "agent_type": "education",
+    "assigned_email": "roy2272234@gmail.com",
+    "client_id": "user-0f97e3620b3d",
+    "flow_v2_live": true,
+    "flow_v2_artifact_path": "db\\agents\\3af81a07-34b1-42b5-a5a1-bd6d8d79cc63.15956546.live.flow.v2.json",
+    "flow_v2_published_at": "2026-07-10T19:05:02.037459",
+    "flow_v2_published_by": "roy2272234@gmail.com",
+    "flow_v2_runtime_backup_path": "db\\agents\\3af81a07-34b1-42b5-a5a1-bd6d8d79cc63.runtime.backup.a1293903.json"
+  },
+  "tts_provider": "edge"
+}

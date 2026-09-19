@@ -1,0 +1,336 @@
+diff --git a/tts/provider.py b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/tts/provider.py
+index 8f1d205..964665a 100644
+--- a/tts/provider.py
++++ b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/tts/provider.py	
+@@ -18,10 +18,10 @@ import urllib.request
+ 
+ logger = logging.getLogger(__name__)
+ 
+-DEFAULT_PROVIDER = "edge"
++DEFAULT_PROVIDER = "indic_parler"
++# ── NEW: indic_parler added to supported providers ─────────────────────────
+ SUPPORTED_PROVIDERS = {"edge", "cartesia", "indic_parler"}
+ _AGENT_CONFIG_CACHE: dict[str, tuple[float, dict]] = {}
+-_AGENT_SCHEMA_DIR = Path(__file__).resolve().parent.parent / "db" / "agents"
+ 
+ 
+ def _env_bool(name: str, default: bool = False) -> bool:
+@@ -33,6 +33,8 @@ def _env_bool(name: str, default: bool = False) -> bool:
+ 
+ def _normalize_provider(provider: str | None) -> str:
+     normalized = (provider or DEFAULT_PROVIDER).strip().lower()
++    if normalized == "parler":
++        normalized = "indic_parler"
+     if normalized not in SUPPORTED_PROVIDERS:
+         logger.warning("Unknown TTS_PROVIDER=%s; falling back to %s", provider, DEFAULT_PROVIDER)
+         return DEFAULT_PROVIDER
+@@ -49,6 +51,7 @@ def _configured_provider(agent_id: str = "default") -> str:
+     if schema_provider:
+         return schema_provider
+ 
++    # Legacy env-var override for Cartesia
+     cartesia_agent_ids = {
+         item.strip()
+         for item in os.getenv("CARTESIA_AGENT_IDS", "").split(",")
+@@ -56,6 +59,16 @@ def _configured_provider(agent_id: str = "default") -> str:
+     }
+     if agent_id and agent_id in cartesia_agent_ids:
+         return "cartesia"
++
++    # NEW: env-var override for Indic Parler
++    indic_parler_agent_ids = {
++        item.strip()
++        for item in os.getenv("INDIC_PARLER_AGENT_IDS", "").split(",")
++        if item.strip()
++    }
++    if agent_id and agent_id in indic_parler_agent_ids:
++        return "indic_parler"
++
+     return global_provider
+ 
+ 
+@@ -63,89 +76,49 @@ def _provider_config_from_agent_schema(agent_id: str) -> dict:
+     if not agent_id or agent_id == "default":
+         return {}
+ 
+-    # Check cache (expire after 10s)
++    # Check cache (expire after 30 s)
+     cached = _AGENT_CONFIG_CACHE.get(agent_id)
+-    if cached and (time.time() - cached[0]) < 10.0:
++    if cached and (time.time() - cached[0]) < 30.0:
+         return cached[1]
+ 
+     config = {}
+-
+-    # 1. Fast direct SQLite lookup (0.1ms, no network deadlocks)
+     try:
+-        backend_dir = Path(__file__).resolve().parent.parent
+-        db_path = backend_dir / "db" / "platform.db"
+-        if db_path.exists():
+-            import sqlite3
+-            conn = sqlite3.connect(str(db_path))
+-            conn.row_factory = sqlite3.Row
+-            cursor = conn.cursor()
+-            cursor.execute("SELECT tts_provider, voice, cartesia_voice_id, name, agent_type FROM agents WHERE id = ?", (agent_id,))
+-            row = cursor.fetchone()
+-            conn.close()
+-            if row:
+-                row_dict = dict(row)
+-                if row_dict.get("tts_provider"):
+-                    config["tts_provider"] = _normalize_provider(row_dict["tts_provider"])
+-                if row_dict.get("voice"):
+-                    config["voice"] = str(row_dict["voice"]).strip()
+-                if row_dict.get("cartesia_voice_id"):
+-                    config["cartesia_voice_id"] = str(row_dict["cartesia_voice_id"]).strip()
+-                if row_dict.get("name"):
+-                    config["name"] = str(row_dict["name"]).strip()
+-                if row_dict.get("agent_type"):
+-                    config["agent_type"] = str(row_dict["agent_type"]).strip()
++        url = os.getenv("BACKEND_API_URL", "http://127.0.0.1:8000") + f"/api/agents/{agent_id}"
++        req = urllib.request.Request(url)
++        with urllib.request.urlopen(req, timeout=2.0) as response:
++            if response.status == 200:
++                schema = json.loads(response.read().decode())
++                provider_config = schema.get("provider_config") or {}
++                provider = provider_config.get("tts_provider") or schema.get("tts_provider")
++                if provider:
++                    config["tts_provider"] = _normalize_provider(provider)
++                cartesia_voice_id = provider_config.get("cartesia_voice_id") or schema.get("cartesia_voice_id")
++                if cartesia_voice_id:
++                    config["cartesia_voice_id"] = str(cartesia_voice_id).strip()
++                # NEW: indic_parler voice description override
++                indic_voice_desc = (
++                    provider_config.get("parler_description")
++                    or schema.get("parler_description")
++                    or provider_config.get("indic_parler_voice_description")
++                    or schema.get("indic_parler_voice_description")
++                )
++                if indic_voice_desc:
++                    config["indic_parler_voice_description"] = indic_voice_desc
++            else:
++                raise RuntimeError(f"Backend API returned status {response.status}")
++    except urllib.error.HTTPError as exc:
++        if exc.code == 404:
++            logger.info("Agent %s not found in API, falling back to default TTS provider.", agent_id)
++            config = {}
++        else:
++            logger.error("API error for TTS provider config agent_id=%s: %s", agent_id, exc)
++            raise RuntimeError(f"Backend API error ({exc.code}) while fetching TTS configuration.") from exc
++    except urllib.error.URLError as exc:
++        logger.error("Could not read TTS provider config for agent_id=%s from API: %s", agent_id, exc)
++        raise RuntimeError("Backend API must be running to fetch TTS configuration.") from exc
+     except Exception as exc:
+-        logger.debug("SQLite agent lookup failed for %s: %s", agent_id, exc)
+-
+-    # 2. Fast local JSON schema file lookup
+-    if not config.get("tts_provider"):
+-        try:
+-            json_path = _AGENT_SCHEMA_DIR / f"{agent_id}.json"
+-            if json_path.exists():
+-                with open(json_path, "r", encoding="utf-8") as f:
+-                    schema = json.load(f)
+-                    provider_config = schema.get("provider_config") or {}
+-                    provider = provider_config.get("tts_provider") or schema.get("tts_provider")
+-                    if provider:
+-                        config["tts_provider"] = _normalize_provider(provider)
+-                    voice = provider_config.get("voice") or schema.get("voice")
+-                    if voice:
+-                        config["voice"] = str(voice).strip()
+-                    cartesia_voice_id = provider_config.get("cartesia_voice_id") or schema.get("cartesia_voice_id")
+-                    if cartesia_voice_id:
+-                        config["cartesia_voice_id"] = str(cartesia_voice_id).strip()
+-                    if schema.get("name"):
+-                        config["name"] = str(schema["name"]).strip()
+-                    if schema.get("agent_type"):
+-                        config["agent_type"] = str(schema["agent_type"]).strip()
+-        except Exception as exc:
+-            logger.debug("JSON agent lookup failed for %s: %s", agent_id, exc)
+-
+-    # 3. HTTP API fallback
+-    if not config.get("tts_provider"):
+-        try:
+-            port = os.getenv("PORT", "8000")
+-            url = os.getenv("BACKEND_API_URL", f"http://127.0.0.1:{port}") + f"/api/agents/{agent_id}"
+-            req = urllib.request.Request(url)
+-            with urllib.request.urlopen(req, timeout=1.0) as response:
+-                if response.status == 200:
+-                    schema = json.loads(response.read().decode())
+-                    provider_config = schema.get("provider_config") or {}
+-                    provider = provider_config.get("tts_provider") or schema.get("tts_provider")
+-                    if provider:
+-                        config["tts_provider"] = _normalize_provider(provider)
+-                    voice = provider_config.get("voice") or schema.get("voice")
+-                    if voice:
+-                        config["voice"] = str(voice).strip()
+-                    cartesia_voice_id = provider_config.get("cartesia_voice_id") or schema.get("cartesia_voice_id")
+-                    if cartesia_voice_id:
+-                        config["cartesia_voice_id"] = str(cartesia_voice_id).strip()
+-                    if schema.get("name"):
+-                        config["name"] = str(schema["name"]).strip()
+-                    if schema.get("agent_type"):
+-                        config["agent_type"] = str(schema["agent_type"]).strip()
+-        except Exception:
+-            pass
++        logger.error("Unexpected error fetching TTS config: %s", exc)
++        raise RuntimeError("Unexpected error fetching TTS configuration from API.") from exc
+ 
+     _AGENT_CONFIG_CACHE[agent_id] = (time.time(), config)
+     return config
+@@ -159,20 +132,22 @@ def _shadow_provider(primary_provider: str) -> str:
+     configured = os.getenv("TTS_SHADOW_PROVIDER")
+     if configured:
+         return _normalize_provider(configured)
+-    return "cartesia" if primary_provider == "edge" else "edge"
++    # Default shadow: if primary is edge → shadow with cartesia; otherwise → edge
++    if primary_provider == "edge":
++        return "cartesia"
++    if primary_provider == "indic_parler":
++        return "edge"
++    return "edge"
+ 
+ 
+ def _load_provider(provider: str):
+     if provider == "cartesia":
+         from .tts_cartesia import generate_speech_stream as _cartesia
+-
+         return _cartesia
+-    elif provider == "indic_parler":
++    if provider == "indic_parler":
+         from .tts_indic_parler import generate_speech_stream as _indic_parler
+-
+         return _indic_parler
+     from .tts_edge import generate_speech_stream as _edge
+-
+     return _edge
+ 
+ 
+@@ -208,47 +183,14 @@ def _stream_provider(
+     text: str,
+     preferred_language: str | None,
+     cartesia_voice_id: str | None = None,
+-    agent_id: str = "default",
+-    custom_voice: str | None = None,
++    indic_parler_voice_description: str | None = None,
+ ):
+     if provider == "cartesia":
+         return _load_provider(provider)(text, preferred_language, voice_id=cartesia_voice_id)
+-    elif provider == "indic_parler":
+-        return _load_provider(provider)(text, preferred_language, agent_id=agent_id)
+-    return _load_provider(provider)(text, preferred_language, agent_id=agent_id, custom_voice=custom_voice)
+-
+-
+-def time_stretch_ola(audio: np.ndarray, rate: float, frame_size: int = 512, hop_size: int = 128) -> np.ndarray:
+-    """Simple Overlap-Add (OLA) time stretching to speed up audio without changing pitch."""
+-    if rate == 1.0:
+-        return audio
+-    
+-    hop_out = hop_size
+-    hop_in = int(round(rate * hop_out))
+-    
+-    num_frames = int((len(audio) - frame_size) / hop_in)
+-    if num_frames <= 0:
+-        return audio
+-        
+-    output_len = num_frames * hop_out + frame_size
+-    output = np.zeros(output_len, dtype=np.float32)
+-    window = np.hanning(frame_size)
+-    window_sum = np.zeros(output_len, dtype=np.float32)
+-    
+-    for i in range(num_frames):
+-        start_in = i * hop_in
+-        frame = audio[start_in:start_in + frame_size].astype(np.float32)
+-        if len(frame) < frame_size:
+-            break
+-            
+-        start_out = i * hop_out
+-        output[start_out:start_out + frame_size] += frame * window
+-        window_sum[start_out:start_out + frame_size] += window
+-        
+-    window_sum[window_sum == 0] = 1.0
+-    output /= window_sum
+-    
+-    return np.clip(output, -32768, 32767).astype(np.int16)
++    if provider == "indic_parler":
++        return _load_provider(provider)(text, preferred_language, description=indic_parler_voice_description)
++    # edge and indic_parler share the same (text, preferred_language) signature
++    return _load_provider(provider)(text, preferred_language)
+ 
+ 
+ def generate_speech_stream(
+@@ -256,11 +198,10 @@ def generate_speech_stream(
+     preferred_language: str | None = None,
+     agent_id: str = "default",
+ ):
+-    """Yield live TTS audio from the selected provider, speeded up by 4x."""
++    """Yield live TTS audio from the selected provider."""
+     primary_provider = _configured_provider(agent_id)
+-    schema_cfg = _provider_config_from_agent_schema(agent_id)
+-    cartesia_voice_id = schema_cfg.get("cartesia_voice_id")
+-    custom_voice = schema_cfg.get("voice")
++    cartesia_voice_id = _cartesia_voice_id_for_agent(agent_id)
++    indic_voice_desc = _provider_config_from_agent_schema(agent_id).get("indic_parler_voice_description")
+ 
+     if _env_bool("TTS_SHADOW_MODE", False):
+         shadow = _shadow_provider(primary_provider)
+@@ -271,7 +212,6 @@ def generate_speech_stream(
+                 daemon=True,
+             ).start()
+ 
+-    audio_chunks = []
+     nonempty_yielded = False
+     try:
+         for chunk in _stream_provider(
+@@ -279,12 +219,11 @@ def generate_speech_stream(
+             text,
+             preferred_language,
+             cartesia_voice_id=cartesia_voice_id,
+-            agent_id=agent_id,
+-            custom_voice=custom_voice,
++            indic_parler_voice_description=indic_voice_desc
+         ):
+             if chunk:
+                 nonempty_yielded = True
+-                audio_chunks.append(chunk)
++            yield chunk
+     except Exception as exc:
+         logger.exception("[TTS PROVIDER] primary=%s failed: %s", primary_provider, exc)
+ 
+@@ -306,34 +245,9 @@ def generate_speech_stream(
+                 text,
+                 preferred_language,
+                 cartesia_voice_id=cartesia_voice_id,
+-                agent_id=agent_id,
+-                custom_voice=custom_voice,
++                indic_parler_voice_description=indic_voice_desc
+             ):
+-                if chunk:
+-                    audio_chunks.append(chunk)
++                yield chunk
+         except Exception as fallback_exc:
+             logger.exception("[TTS PROVIDER] fallback=%s failed: %s", DEFAULT_PROVIDER, fallback_exc)
+-
+-    full_audio = b"".join(audio_chunks)
+-    if not full_audio:
+-        return
+-
+-    import numpy as np
+-    try:
+-        padded_audio = full_audio + b"\x00" if len(full_audio) % 2 != 0 else full_audio
+-        audio_data = np.frombuffer(padded_audio, dtype=np.int16)
+-        
+-        # Check if the audio is too short to stretch (less than 512 samples)
+-        if len(audio_data) < 512:
+-            speeded_bytes = full_audio
+-        else:
+-            speeded_audio = time_stretch_ola(audio_data, 4.0)
+-            speeded_bytes = speeded_audio.tobytes()
+-    except Exception as exc:
+-        logger.error("[TTS SPEEDUP] Failed to time stretch audio: %s, using original", exc)
+-        speeded_bytes = full_audio
+-
+-    chunk_size = 2048
+-    for i in range(0, len(speeded_bytes), chunk_size):
+-        yield speeded_bytes[i:i+chunk_size]
+-
++            yield b""
+\ No newline at end of file

@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom design styles for the Cosmic Chameleon premium landing page */
+
+:root {
+  --color-dark-bg: #030712;
+  --color-neon-purple: #7c3aed;
+  --color-neon-blue: #3b82f6;
+  --color-neon-cyan: #06b6d4;
+  --color-neon-indigo: #6366f1;
+}
+
+/* Background gradient animation */
+.tw-bg-mesh-gradient {
+  background-color: var(--color-dark-bg);
+  background-image: 
+    radial-gradient(at 10% 20%, rgba(124, 58, 237, 0.15) 0px, transparent 50%),
+    radial-gradient(at 90% 10%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+    radial-gradient(at 50% 80%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
+}
+
+/* Smooth custom scrolling */
+html {
+  scroll-behavior: smooth;
+  background-color: var(--color-dark-bg);
+}
+
+/* Subtle glow effects */
+.glow-purple {
+  filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.5));
+}
+.glow-blue {
+  filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.5));
+}
+.glow-text-purple {
+  text-shadow: 0 0 8px rgba(124, 58, 237, 0.6);
+}
+
+/* Floating animated elements */
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(2deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes float-reverse {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(15px) rotate(-2deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-float-slow {
+  animation: float 10s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 12s ease-in-out infinite;
+}
+
+/* Glassmorphism panel styling */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(124, 58, 237, 0.3);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(124, 58, 237, 0.1);
+  transform: translateY(-4px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Gradient Borders */
+.gradient-border-wrapper {
+  position: relative;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+  padding: 1px;
+}
+
+.gradient-border-wrapper:hover {
+  background: linear-gradient(135deg, var(--color-neon-purple) 0%, var(--color-neon-blue) 100%);
+}
+
+.gradient-border-content {
+  background: #090d1a;
+  border-radius: 0.95rem;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #030712;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.4);
+}
+
+/* Orb breathing animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1) translate(-50%, -50%);
+    opacity: 0.4;
+    filter: blur(80px);
+  }
+  50% {
+    transform: scale(1.15) translate(-48%, -48%);
+    opacity: 0.6;
+    filter: blur(100px);
+  }
+}
+
+.orb-glow-purple {
+  animation: pulse-glow 8s ease-in-out infinite;
+}
+
+.orb-glow-blue {
+  animation: pulse-glow 10s ease-in-out infinite alternate;
+}

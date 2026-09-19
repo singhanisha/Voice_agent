@@ -1,0 +1,75 @@
+{
+  "agent_name": "Rani",
+  "voice_id": "11labs-06nek6zjTCD1vCbtc8bc",
+  "conversation_flow_id": "flow_d85c27aa",
+  "global_prompt": "You are an sales agent",
+  "conversationFlow": {
+    "global_prompt": "You are an sales agent",
+    "start_node_id": "root_greeting",
+    "nodes": [
+      {
+        "id": "root_greeting",
+        "name": "Initial Greeting",
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Greet the user warmly as Rani and confirm identity using the lead name."
+        },
+        "response": "Hello, this is Rani from the Real Estate team. Am I speaking with {{name}}?",
+        "intent_triggers": [
+          "call_connected"
+        ],
+        "edges": [
+          {
+            "id": "to_discovery",
+            "condition": "user responds",
+            "destination_node_id": "discovery"
+          }
+        ]
+      },
+      {
+        "id": "discovery",
+        "name": "Information Discovery",
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Qualify lead interest and collect data fields."
+        },
+        "response": "I'm calling about some premium property options. Would you have a moment?",
+        "collects": [
+          "interested",
+          "budget",
+          "location"
+        ],
+        "edges": [
+          {
+            "id": "to_end",
+            "condition": "conversation finished",
+            "destination_node_id": "end_node"
+          }
+        ]
+      },
+      {
+        "id": "end_node",
+        "name": "Conclusion",
+        "type": "end",
+        "instruction": {
+          "type": "prompt",
+          "text": "End the call politely."
+        },
+        "response": "Thank you for your time. Have a great day!"
+      }
+    ]
+  },
+  "provider_config": {
+    "stt_provider": "groq",
+    "tts_provider": "edge",
+    "cartesia_voice_id": "95d51f79-c397-46f9-b49a-23763d3eaa2d"
+  },
+  "agent_metadata": {
+    "agent_type": "real_estate_sales",
+    "assigned_email": "maniarasan@jobjockey.in",
+    "client_id": "user-2405b75e35da"
+  },
+  "tts_provider": "edge"
+}

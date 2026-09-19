@@ -1,0 +1,58 @@
+    def __init__(
+        self,
+        text: str,
+        voice: str = DEFAULT_VOICE,
+        *,
+        rate: str = "+0%",
+        volume: str = "+0%",
+        pitch: str = "+0Hz",
+        boundary: Literal["WordBoundary", "SentenceBoundary"] = "SentenceBoundary",
+        connector: Optional[aiohttp.BaseConnector] = None,
+        proxy: Optional[str] = None,
+        connect_timeout: Optional[int] = 10,
+        receive_timeout: Optional[int] = 60,
+    ):
+        # Validate TTS settings and store the TTSConfig object.
+        self.tts_config = TTSConfig(voice, rate, volume, pitch, boundary)
+
+        # Validate the text parameter.
+        if not isinstance(text, str):
+            raise TypeError("text must be str")
+
+        # Split the text into multiple strings and store them.
+        self.texts = split_text_by_byte_length(
+            escape(remove_incompatible_characters(text)),
+            4096,
+        )
+
+        # Validate the proxy parameter.
+        if proxy is not None and not isinstance(proxy, str):
+            raise TypeError("proxy must be str")
+        self.proxy: Optional[str] = proxy
+
+        # Validate the timeout parameters.
+        if not isinstance(connect_timeout, int):
+            raise TypeError("connect_timeout must be int")
+        if not isinstance(receive_timeout, int):
+            raise TypeError("receive_timeout must be int")
+        self.session_timeout = aiohttp.ClientTimeout(
+            total=None,
+            connect=None,
+            sock_connect=connect_timeout,
+            sock_read=receive_timeout,
+        )
+
+        # Validate the connector parameter.
+        if connector is not None and not isinstance(connector, aiohttp.BaseConnector):
+            raise TypeError("connector must be aiohttp.BaseConnector")
+        self.connector: Optional[aiohttp.BaseConnector] = connector
+
+        # Store current state of TTS.
+        self.state: CommunicateState = {
+            "partial_text": b"",
+            "offset_compensation": 0,
+            "last_duration_offset": 0,
+            "stream_was_called": False,
+            "chunk_audio_bytes": 0,
+            "cumulative_audio_bytes": 0,
+        }

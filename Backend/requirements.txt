@@ -1,0 +1,35 @@
+fastapi
+uvicorn
+gunicorn
+httpx
+python-dotenv
+websockets
+pydantic
+
+# AI APIs
+groq
+twilio
+
+# TTS (cloud)
+edge-tts
+
+# Audio processing (REQUIRED for voice pipeline)
+numpy
+scipy
+sounddevice
+soundfile
+
+# Pipeline orchestration
+pipecat-ai
+miniaudio
+scikit-learn
+
+# LangGraph & Crawler Architecture
+langgraph
+langchain-core
+aiohttp
+beautifulsoup4
+
+# Local STT (Indic Seamless)
+torch
+transformers

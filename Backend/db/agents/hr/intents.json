@@ -1,0 +1,144 @@
+[
+    {
+        "id": "confirm",
+        "examples": [
+            "yes", "yeah", "yep", "sure", "correct", "speaking",
+            "haan", "han", "ji", "ji haan", "theek hai", "ho", "bilkul"
+        ]
+    },
+    {
+        "id": "deny",
+        "examples": [
+            "no", "nope", "nah", "nahi", "nai", "nako"
+        ]
+    },
+    {
+        "id": "deny_identity",
+        "examples": [
+            "wrong number", "wrong person", "this is not him",
+            "galat number", "ye mera number nahi hai", "koi aur hai"
+        ]
+    },
+    {
+        "id": "deny_interest",
+        "examples": [
+            "not interested", "not looking for a change", "i am happy here",
+            "job nahi chahiye", "abhi switch nahi karna", "no requirement"
+        ]
+    },
+    {
+        "id": "deny_time",
+        "examples": [
+            "busy", "call later", "not now", "in a meeting", "driving",
+            "baad me call karo", "abhi busy hoon", "meeting me hoon"
+        ]
+    },
+    {
+        "id": "job_application",
+        "examples": [
+            "about the job", "i applied for the role", "regarding my application",
+            "yes i applied", "the developer position", "job ke liye",
+            "maine apply kiya tha", "interview ke baare me"
+        ]
+    },
+    {
+        "id": "hr_query",
+        "examples": [
+            "i have an hr question", "about my leave", "regarding salary slip",
+            "pf related", "reimbursement query", "attendance issue",
+            "leave ke baare me", "salary slip chahiye", "pf ka question hai"
+        ]
+    },
+    {
+        "id": "provide_experience",
+        "examples": [
+            "i have 4 years of experience", "around 6 years", "2.5 years total",
+            "fresher", "char saal ka experience hai", "abhi 3 saal hue"
+        ]
+    },
+    {
+        "id": "provide_current_role",
+        "examples": [
+            "i am a backend developer", "working as a QA engineer",
+            "senior analyst", "team lead hoon", "abhi developer hoon"
+        ]
+    },
+    {
+        "id": "provide_ctc",
+        "examples": [
+            "current is 8 lakhs", "expecting 12 LPA", "around 10 lakh",
+            "abhi 7 lakh hai", "expectation 12 se 14 lakh"
+        ]
+    },
+    {
+        "id": "provide_notice_period",
+        "examples": [
+            "30 days notice", "two months", "immediate joiner",
+            "90 days", "turant join kar sakta hoon", "do mahine lagenge"
+        ]
+    },
+    {
+        "id": "confirm_interview",
+        "examples": [
+            "yes lets schedule", "i am available for interview", "book it",
+            "sure schedule it", "haan interview de sakta hoon", "theek hai schedule karo"
+        ]
+    },
+    {
+        "id": "provide_interview_datetime",
+        "examples": [
+            "monday at 11", "this saturday morning", "tomorrow 4 pm",
+            "weekday works", "somvaar ko 11 baje", "kal shaam ko"
+        ]
+    },
+    {
+        "id": "reschedule_interview",
+        "examples": [
+            "can we shift it", "reschedule please", "that time does not work",
+            "kisi aur din", "time change kar sakte hain"
+        ]
+    },
+    {
+        "id": "ctc_mismatch",
+        "examples": [
+            "that budget is low", "package is less", "i expect more",
+            "budget kam hai", "itne me nahi hoga"
+        ]
+    },
+    {
+        "id": "ask_role_details",
+        "examples": [
+            "what is the role", "tell me about the job", "which company",
+            "role kya hai", "kaam kya hoga", "location kahan hai"
+        ]
+    },
+    {
+        "id": "provide_policy_topic",
+        "examples": [
+            "leave policy", "how many casual leaves", "salary date",
+            "pf withdrawal", "experience letter chahiye", "reimbursement kaise claim karein"
+        ]
+    },
+    {
+        "id": "sensitive_topic",
+        "examples": [
+            "i want to file a complaint", "i have a grievance",
+            "issue with my manager", "harassment", "i want to resign",
+            "termination", "appraisal not fair", "manager ke saath problem hai"
+        ]
+    },
+    {
+        "id": "provide_callback_time",
+        "examples": [
+            "call me at 6", "tomorrow morning", "after 7 pm",
+            "shaam ko call karo", "kal subah"
+        ]
+    },
+    {
+        "id": "provide_info",
+        "examples": [
+            "my name is Rahul", "i work in Pune",
+            "i am from the Bangalore office"
+        ]
+    }
+]

@@ -1,0 +1,95 @@
+[
+    {
+        "name": "Integration Test Agent",
+        "voice": "ElevenLabs Priya",
+        "language": "Hindi + English",
+        "max_duration": 120,
+        "provider": "Vapi.ai",
+        "script": "You are a test agent...",
+        "data_fields": [
+            "Call Status",
+            "Interested"
+        ],
+        "id": "5fe0e2fb-11c5-4430-af64-c333e47b8633",
+        "createdAt": "2026-04-14T00:19:27.364381"
+    },
+    {
+        "name": "Integration Test Agent",
+        "voice": "ElevenLabs Priya",
+        "language": "Hindi + English",
+        "max_duration": 120,
+        "provider": "Vapi.ai",
+        "script": "You are a test agent...",
+        "data_fields": [
+            "Call Status",
+            "Interested"
+        ],
+        "id": "fa0e42b0-9863-4315-9e0e-8896aa1fefc7",
+        "createdAt": "2026-04-14T00:21:19.547554"
+    },
+    {
+        "name": "Integration Test Agent",
+        "voice": "ElevenLabs Priya",
+        "language": "Hindi + English",
+        "max_duration": 120,
+        "provider": "Vapi.ai",
+        "script": "You are a test agent...",
+        "data_fields": [
+            "Call Status",
+            "Interested"
+        ],
+        "id": "31f29fd6-f483-4de9-a14f-29aa960e450c",
+        "createdAt": "2026-04-14T00:27:43.103470"
+    },
+    {
+        "name": "Integration Test Agent",
+        "voice": "ElevenLabs Priya",
+        "language": "Hindi + English",
+        "max_duration": 120,
+        "provider": "Vapi.ai",
+        "script": "You are a test agent...",
+        "data_fields": [
+            "Call Status",
+            "Interested"
+        ],
+        "id": "b8909946-f674-491a-915b-0d58808946e6",
+        "schema_path": "db\\agents\\b8909946-f674-491a-915b-0d58808946e6.json",
+        "createdAt": "2026-04-14T00:33:14.775490"
+    },
+    {
+        "name": "Neha \u2014 Real Estate Specialist",
+        "voice": "en-IN-NeerjaNeural",
+        "language": "Multi (English, Hinglish, Marathi)",
+        "max_duration": 300,
+        "provider": "Pipecat-AI Execution",
+        "script": "You are Neha from the Real Estate AI team. Qualify property leads with a warm, charismatic tone. Detect language naturally (English, Hinglish, Marathi).",
+        "data_fields": [
+            "Name",
+            "Location",
+            "Budget",
+            "Property Type",
+            "Interested"
+        ],
+        "id": "8e812315-ab39-4a87-8045-349ddf67dfd5",
+        "schema_path": "db\\agents\\8e812315-ab39-4a87-8045-349ddf67dfd5.json",
+        "createdAt": "2026-04-14T00:41:05.778251"
+    },
+    {
+        "name": "Neha \u2014 Real Estate Specialist",
+        "voice": "en-IN-NeerjaNeural",
+        "language": "Multi (English, Hinglish, Marathi)",
+        "max_duration": 300,
+        "provider": "Pipecat-AI Execution",
+        "script": "You are Neha from the Real Estate AI team. Qualify property leads with a warm, charismatic tone. Detect language naturally (English, Hinglish, Marathi).",
+        "data_fields": [
+            "Name",
+            "Location",
+            "Budget",
+            "Property Type",
+            "Interested"
+        ],
+        "id": "ea2e03c2-e6d0-4437-bebc-acd3eb2eb01a",
+        "schema_path": "db\\agents\\ea2e03c2-e6d0-4437-bebc-acd3eb2eb01a.json",
+        "createdAt": "2026-04-14T00:54:46.415359"
+    }
+]

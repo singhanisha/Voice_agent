@@ -1,0 +1,201 @@
+{
+  "schema_version": "2.0",
+  "id": "flowv2_77103da1a9fd",
+  "agent_id": "3af81a07-34b1-42b5-a5a1-bd6d8d79cc63",
+  "agent_name": "Indic-Test",
+  "agent_type": "education",
+  "status": "draft",
+  "runtime_mode": "shadow",
+  "default_locale": "en",
+  "supported_locales": [
+    "en",
+    "hi",
+    "mr"
+  ],
+  "start_node_id": "start",
+  "global_prompt": "You are an education counselling voice agent.\n\nPrimary goal:\nUnderstand the student's course interest and connect them with the right counsellor.\n\nConversation style:\nBe encouraging, patient, and clear. Ask one question at a time. Support parents and students without sounding pushy.\n\nDiscovery questions:\n1. Ask which course, program, exam, or career path they are interested in.\n2. Ask current education level.\n3. Ask preferred city, online/offline preference, and timeline.\n4. Ask budget or fee range only if the conversation naturally allows it.\n5. Ask whether a counsellor should call back.\n\nRules:\nDo not guarantee admission, scholarship, visa approval, placement, or exam results.\n\nFinal outcome:\nSummarize the student requirement and confirm the counselling follow-up.",
+  "slots": [
+    {
+      "id": "interested",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "course_interest",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "education_level",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "city",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "budget",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "callback",
+      "required": true,
+      "source": "conversation"
+    }
+  ],
+  "intents": [
+    {
+      "id": "confirm",
+      "examples": [
+        "yes",
+        "okay",
+        "sure"
+      ]
+    },
+    {
+      "id": "deny",
+      "examples": [
+        "no",
+        "not interested"
+      ]
+    },
+    {
+      "id": "unclear",
+      "examples": [
+        "hmm",
+        "repeat"
+      ]
+    },
+    {
+      "id": "provide_info",
+      "examples": [
+        "my budget is 50 lakh"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "label": "Greeting",
+      "response": {
+        "en": "Hello, this is Indic-Test. Am I speaking with {{name}}?"
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "discovery",
+      "type": "slot_collection",
+      "label": "Discovery",
+      "collects": [
+        "interested",
+        "course_interest",
+        "education_level",
+        "city",
+        "budget",
+        "callback"
+      ],
+      "response": {
+        "en": "Could you share a little about what you are looking for?"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "confirm",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "fallback",
+      "type": "fallback",
+      "label": "Clarify",
+      "response": {
+        "en": "Sorry, I did not catch that clearly. Could you repeat it once?"
+      },
+      "fallback": {
+        "max_attempts": 2,
+        "escalation_target": "end"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "discovery"
+        },
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        }
+      ]
+    },
+    {
+      "id": "confirm_followup",
+      "type": "message",
+      "label": "Confirm Follow-up",
+      "response": {
+        "en": "Thanks. I will have the team follow up with the right details."
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "end"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "label": "End",
+      "response": {
+        "en": "Thank you. Have a good day."
+      },
+      "transitions": []
+    }
+  ],
+  "metadata": {
+    "source": "agent_metadata",
+    "source_language": "English",
+    "validation_required": true
+  },
+  "validation": {
+    "status": "valid",
+    "node_count": 5,
+    "terminal_count": 1
+  },
+  "tts_provider": "edge"
+}

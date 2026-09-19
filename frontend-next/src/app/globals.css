@@ -1,0 +1,210 @@
+/* Import shared token system first */
+@import './theme.tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Transitions — 100ms ease-out only, no bounce/scale/glow
+   ───────────────────────────────────────────────────────────── */
+a, button, input, select, textarea {
+  transition-duration: 100ms;
+  transition-timing-function: ease-out;
+}
+
+/* Remove all Bootstrap box-shadows globally */
+*,
+*::before,
+*::after {
+  box-shadow: none !important;
+}
+/* Re-allow only what we explicitly set */
+.modal-content,
+.dropdown-menu {
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Padding utilities (used in some pages)
+   ───────────────────────────────────────────────────────────── */
+.pt-12 { padding-top: 3rem !important; }
+.pb-12 { padding-bottom: 3rem !important; }
+
+/* ─────────────────────────────────────────────────────────────
+   CRM Readiness / Website Score components
+   Kept dark-surface to match new theme
+   ───────────────────────────────────────────────────────────── */
+.ws-hero {
+  background:    var(--bg-elevated);
+  border:        1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding:       1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+.ws-hero-name   { font-size: 1.35rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem; }
+.ws-hero-domain { font-size: 0.82rem; color: var(--text-tertiary); font-family: var(--font-mono); }
+
+.ws-score-ring {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1.1rem;
+  border: 2px solid var(--border-strong);
+  flex-shrink: 0;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+.ws-score-ring.high   { border-color: var(--color-live); color: var(--color-live); }
+.ws-score-ring.medium { border-color: var(--border-strong); }
+.ws-score-ring.low    { border-color: var(--color-error); color: var(--color-error); }
+.ws-score-ring.insufficient { border-color: var(--text-tertiary); color: var(--text-tertiary); }
+
+.ws-section {
+  background:    var(--bg-surface);
+  border:        1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding:       1rem 1.25rem;
+  height:        100%;
+}
+.ws-section-title {
+  font-size:      var(--text-xs);
+  font-weight:    600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color:          var(--text-secondary);
+  margin-bottom:  0.6rem;
+  display:        flex;
+  align-items:    center;
+  gap:            0.4rem;
+}
+.ws-section-title::before {
+  content: '';
+  display: inline-block;
+  width: 2px; height: 13px;
+  background: var(--border-strong);
+  border-radius: 2px;
+}
+.ws-pill {
+  display:       inline-block;
+  background:    var(--bg-elevated);
+  color:         var(--text-secondary);
+  border:        1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding:       0.2rem 0.65rem;
+  font-size:     0.78rem;
+  font-weight:   500;
+}
+.ws-value-item {
+  display:      flex;
+  align-items:  flex-start;
+  gap:          0.5rem;
+  padding:      0.4rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size:    0.83rem;
+  color:        var(--text-secondary);
+}
+.ws-value-item:last-child { border-bottom: none; }
+.ws-value-icon { color: var(--color-live); margin-top: 1px; flex-shrink: 0; }
+
+.ws-faq-item {
+  padding:       0.45rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size:     0.83rem;
+  color:         var(--text-secondary);
+}
+.ws-faq-item:last-child { border-bottom: none; }
+.ws-faq-q { font-weight: 600; color: var(--text-primary); margin-bottom: 0.2rem; }
+.ws-faq-a { font-size: 0.8rem; color: var(--text-tertiary); line-height: 1.4; }
+
+.ws-page-chip {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           0.35rem;
+  background:    var(--bg-elevated);
+  border:        1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding:       0.3rem 0.6rem;
+  font-size:     0.75rem;
+  color:         var(--text-secondary);
+}
+.ws-page-chip .page-type-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.page-type-dot { background: var(--border-strong); }
+
+.ws-objection-chip {
+  background:    var(--bg-elevated);
+  color:         var(--text-secondary);
+  border:        1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding:       0.35rem 0.75rem;
+  font-size:     0.78rem;
+}
+
+/* Script generator loading dots */
+@keyframes scrape-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+.scrape-loading-dot {
+  display:    inline-block;
+  width:      8px; height: 8px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  animation:  scrape-pulse 1.2s ease-in-out infinite;
+}
+.scrape-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.scrape-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.scrape-progress-bar  { height: 4px; background: var(--border-subtle); border-radius: 2px; overflow: hidden; margin-top: 1rem; }
+.scrape-progress-fill { height: 100%; background: var(--text-primary); transition: width 0.3s ease; }
+
+/* Script generator modal */
+.scrape-modal .modal-content { border-radius: var(--radius-card); overflow: hidden; }
+.scrape-modal .modal-header  { background: var(--bg-elevated); border-bottom: 1px solid var(--border-subtle); }
+
+/* Website score card hover */
+.ws-history-item {
+  border:        1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding:       0.75rem 1rem;
+  transition:    background-color 100ms ease-out;
+  background:    var(--bg-surface);
+}
+.ws-history-item:hover { background: var(--bg-elevated); }
+
+/* Status badge chips for campaign/lead tables */
+.badge-draft      { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-subtle); }
+.badge-queued     { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-strong); }
+.badge-processing { background: transparent; color: var(--text-primary);   border: 1px solid var(--border-strong); }
+.badge-completed  { background: transparent; color: var(--color-live);     border: 1px solid var(--color-live);   }
+.badge-failed     { background: transparent; color: var(--color-error);    border: 1px solid var(--color-error);  }
+
+/* Admin / Client / Agent role labels */
+.badge-admin  { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-subtle); font-family: var(--font-mono); }
+.badge-client { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-subtle); font-family: var(--font-mono); }
+.badge-agent  { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-subtle); font-family: var(--font-mono); }

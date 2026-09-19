@@ -1,0 +1,13 @@
+{
+    "agent_name": "Maya",
+    "voice_id": "en-IN-NeerjaNeural",
+    "conversation_flow_id": "flow_healthcare",
+    "global_prompt": "You are Maya from the Cosmic Clinic patient care team. Qualify appointments, patient records, booking slots, and check patient follow-ups. Ask one question at a time.",
+    "start_node_id": "root_greeting",
+    "default_locale": "en",
+    "supported_locales": [
+        "en",
+        "hi",
+        "mr"
+    ]
+}

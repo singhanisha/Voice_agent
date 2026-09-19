@@ -1,0 +1,79 @@
+[
+  {
+    "from_node_id": "root_greeting",
+    "transitions": [
+      {
+        "intent": "confirm",
+        "target": "ask_course"
+      },
+      {
+        "intent": "deny",
+        "target": "end_node"
+      },
+      {
+        "intent": "deny_identity",
+        "target": "end_node"
+      },
+      {
+        "intent": "deny_time",
+        "target": "ask_callback"
+      }
+    ]
+  },
+  {
+    "from_node_id": "ask_course",
+    "transitions": [
+      {
+        "intent": "provide_info",
+        "target": "ask_education"
+      },
+      {
+        "intent": "confirm",
+        "target": "ask_education"
+      }
+    ]
+  },
+  {
+    "from_node_id": "ask_education",
+    "transitions": [
+      {
+        "intent": "provide_info",
+        "target": "ask_preferences"
+      },
+      {
+        "intent": "confirm",
+        "target": "ask_preferences"
+      }
+    ]
+  },
+  {
+    "from_node_id": "ask_preferences",
+    "transitions": [
+      {
+        "intent": "provide_info",
+        "target": "ask_callback"
+      },
+      {
+        "intent": "confirm",
+        "target": "ask_callback"
+      }
+    ]
+  },
+  {
+    "from_node_id": "ask_callback",
+    "transitions": [
+      {
+        "intent": "confirm",
+        "target": "end_node"
+      },
+      {
+        "intent": "deny",
+        "target": "end_node"
+      },
+      {
+        "intent": "provide_info",
+        "target": "end_node"
+      }
+    ]
+  }
+]

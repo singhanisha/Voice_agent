@@ -1,0 +1,42 @@
+[
+    {
+        "id": "root_greeting",
+        "name": "Initial Greeting",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Greet the customer warmly as Arjun and confirm their identity."
+        },
+        "response": "Hello, this is Arjun from the finance advisory desk. Am I speaking with {{name}}?",
+        "intent_triggers": [
+            "call_connected"
+        ]
+    },
+    {
+        "id": "discovery",
+        "name": "Financial Discovery",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Ask details about product interest, income range, required loan amount, and timeline."
+        },
+        "response": "Hello! I am calling to discuss our financial offerings. Could you tell me what product you're interested in, such as a loan or credit card, and the expected amount?",
+        "collects": [
+            "Product Interest",
+            "Income Range",
+            "Loan Amount",
+            "Timeline",
+            "Interested"
+        ]
+    },
+    {
+        "id": "end_node",
+        "name": "Conclusion",
+        "type": "end",
+        "instruction": {
+            "type": "prompt",
+            "text": "Thank the customer, confirm follow-up from a loan advisor, and end the call."
+        },
+        "response": "Thank you for sharing those details. I will assign this case to our advisor who will get back to you shortly. Have a nice day!"
+    }
+]

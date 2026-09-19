@@ -1,0 +1,24 @@
+[
+    {
+        "from_node_id": "root_greeting",
+        "transitions": [
+            {
+                "id": "to_discovery",
+                "intent": "customer confirms identity",
+                "target": "discovery",
+                "condition": "customer confirms identity"
+            }
+        ]
+    },
+    {
+        "from_node_id": "discovery",
+        "transitions": [
+            {
+                "id": "to_end",
+                "intent": "qualification complete",
+                "target": "end_node",
+                "condition": "qualification complete"
+            }
+        ]
+    }
+]

@@ -1,0 +1,80 @@
+[
+  {
+    "id": "real_estate_sales",
+    "name": "Real Estate",
+    "icon": "🏠",
+    "description": "Property qualification and site visit booking.",
+    "demo_agent_name": "Neha",
+    "voice": "en-IN-NeerjaNeural",
+    "language": "Multi (English, Hinglish, Marathi)",
+    "max_duration": 300,
+    "provider": "Pipecat-AI Execution",
+    "script": "You are Neha from the Real Estate AI team. Qualify property leads with a warm, charismatic tone. Detect language naturally (English, Hinglish, Marathi).",
+    "data_fields": ["Name", "Location", "Budget", "Property Type", "Interested"]
+  },
+  {
+    "id": "recruitment",
+    "name": "Recruitment",
+    "icon": "💼",
+    "description": "Candidate screening and interview scheduling.",
+    "demo_agent_name": "Sarah",
+    "voice": "ElevenLabs Priya",
+    "language": "English",
+    "max_duration": 300,
+    "provider": "Pipecat-AI Execution",
+    "script": "You are Sarah from the Recruitment team. Conduct candidate screening and interview scheduling. Be warm, professional, and check availability for subsequent rounds.",
+    "data_fields": ["Name", "Experience", "Current Role", "Expected Salary", "Notice Period", "Interested"]
+  },
+  {
+    "id": "healthcare",
+    "name": "Healthcare",
+    "icon": "🩺",
+    "description": "Appointment booking and patient follow-up.",
+    "demo_agent_name": "Maya",
+    "voice": "en-IN-NeerjaNeural",
+    "language": "English",
+    "max_duration": 300,
+    "provider": "Pipecat-AI Execution",
+    "script": "You are Maya from the Cosmic Clinic patient care team. Qualify appointments, patient records, booking slots, and check patient follow-ups.",
+    "data_fields": ["Name", "Symptom", "Preferred Time", "Doctor", "Interested"]
+  },
+  {
+    "id": "finance",
+    "name": "Finance",
+    "icon": "📈",
+    "description": "Credit check and loan qualification.",
+    "demo_agent_name": "Arjun",
+    "voice": "ElevenLabs Priya",
+    "language": "English",
+    "max_duration": 300,
+    "provider": "Pipecat-AI Execution",
+    "script": "You are Arjun from the Finance Advisory team. Understand customer interest in financial products, qualify income range and loan requirements.",
+    "data_fields": ["Name", "Product Interest", "Income Range", "Loan Amount", "Timeline", "Interested"]
+  },
+  {
+    "id": "insurance",
+    "name": "Insurance",
+    "icon": "🛡️",
+    "description": "Policy renewal support and coverage advisory.",
+    "demo_agent_name": "Ananya",
+    "voice": "en-IN-NeerjaNeural",
+    "language": "English",
+    "max_duration": 300,
+    "provider": "Pipecat-AI Execution",
+    "script": "You are Ananya from the Insurance Renewal support team. Help callers review and renew insurance policies, and confirm if advisor callback is requested.",
+    "data_fields": ["Name", "Policy Type", "Renewal Date", "Coverage Need", "Callback Requested", "Interested"]
+  },
+  {
+    "id": "education",
+    "name": "Education",
+    "icon": "🎓",
+    "description": "Course interest qualification and counsellor booking.",
+    "demo_agent_name": "Priya",
+    "voice": "ElevenLabs Priya",
+    "language": "Hindi + English",
+    "max_duration": 300,
+    "provider": "Pipecat-AI Execution",
+    "script": "You are Priya from the Education counselling desk. Understand student course interests, education levels, and coordinate counsellor follow-ups.",
+    "data_fields": ["Name", "Course Interest", "Education Level", "City", "Budget", "Interested"]
+  }
+]

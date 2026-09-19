@@ -1,0 +1,183 @@
+{
+  "schema_version": "2.0",
+  "id": "flowv2_11d4ea9be686",
+  "agent_id": "7cc26eed-9c86-4081-8c2f-099d1d2161d1",
+  "agent_name": "Rani",
+  "agent_type": "real_estate_sales",
+  "status": "draft",
+  "runtime_mode": "shadow",
+  "default_locale": "en",
+  "supported_locales": [
+    "en",
+    "hi",
+    "mr"
+  ],
+  "start_node_id": "start",
+  "global_prompt": "You are an sales agent",
+  "slots": [
+    {
+      "id": "interested",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "budget",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "location",
+      "required": true,
+      "source": "conversation"
+    }
+  ],
+  "intents": [
+    {
+      "id": "confirm",
+      "examples": [
+        "yes",
+        "okay",
+        "sure"
+      ]
+    },
+    {
+      "id": "deny",
+      "examples": [
+        "no",
+        "not interested"
+      ]
+    },
+    {
+      "id": "unclear",
+      "examples": [
+        "hmm",
+        "repeat"
+      ]
+    },
+    {
+      "id": "provide_info",
+      "examples": [
+        "my budget is 50 lakh"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "label": "Greeting",
+      "response": {
+        "en": "Hello, this is Rani. Am I speaking with {{name}}?"
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "discovery",
+      "type": "slot_collection",
+      "label": "Discovery",
+      "collects": [
+        "interested",
+        "budget",
+        "location"
+      ],
+      "response": {
+        "en": "Could you share a little about what you are looking for?"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "confirm",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "fallback",
+      "type": "fallback",
+      "label": "Clarify",
+      "response": {
+        "en": "Sorry, I did not catch that clearly. Could you repeat it once?"
+      },
+      "fallback": {
+        "max_attempts": 2,
+        "escalation_target": "end"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "discovery"
+        },
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        }
+      ]
+    },
+    {
+      "id": "confirm_followup",
+      "type": "message",
+      "label": "Confirm Follow-up",
+      "response": {
+        "en": "Thanks. I will have the team follow up with the right details."
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "end"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "label": "End",
+      "response": {
+        "en": "Thank you. Have a good day."
+      },
+      "transitions": []
+    }
+  ],
+  "metadata": {
+    "source": "agent_metadata",
+    "source_language": "English,Hinglish,Marathi",
+    "validation_required": true
+  },
+  "validation": {
+    "status": "valid",
+    "node_count": 5,
+    "terminal_count": 1
+  },
+  "tts_provider": "edge"
+}

@@ -1,0 +1,363 @@
+[
+    {
+        "from_node_id": "node-1767592854176",
+        "transitions": [
+            {
+                "id": "edge-1735264581341",
+                "intent": "user confirms identity",
+                "target": "node-1735264873079",
+                "condition": "user confirms identity"
+            },
+            {
+                "id": "edge-1735264682661",
+                "intent": "wrong person or busy",
+                "target": "node-1736492391269",
+                "condition": "wrong person or busy"
+            },
+            {
+                "id": "edge-loop-fix-123456",
+                "intent": "user asks who is this or what is this about",
+                "target": "node-1735264921453",
+                "condition": "user asks who is this or what is this about"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1735264873079",
+        "transitions": [
+            {
+                "id": "edge-1735264873079",
+                "intent": "user is free",
+                "target": "node-1735264921453",
+                "condition": "user is free"
+            },
+            {
+                "id": "edge-1735264905257",
+                "intent": "user is busy",
+                "target": "node-1735970090937",
+                "condition": "user is busy"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1735264921453",
+        "transitions": [
+            {
+                "id": "edge-1735264921453",
+                "intent": "buy/rent/invest",
+                "target": "node-1735267546732",
+                "condition": "buy/rent/invest"
+            },
+            {
+                "id": "edge-objection-budget-high",
+                "intent": "budget too high",
+                "target": "node-objection-budget-high",
+                "condition": "budget too high"
+            },
+            {
+                "id": "edge-objection-not-looking",
+                "intent": "not interested/looking",
+                "target": "node-objection-not-looking",
+                "condition": "not interested/looking"
+            },
+            {
+                "id": "edge-1736510642496",
+                "intent": "wants to sell",
+                "target": "node-1736510533232",
+                "condition": "wants to sell"
+            },
+            {
+                "id": "edge-fallback-intent",
+                "intent": "unclear intent",
+                "target": "fallback_intent",
+                "condition": "unclear intent"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-objection-budget-high",
+        "transitions": [
+            {
+                "id": "edge-obj-budget-yes",
+                "intent": "interested in alternatives",
+                "target": "node-1735267546732",
+                "condition": "interested in alternatives"
+            },
+            {
+                "id": "edge-obj-budget-no",
+                "intent": "still rejects",
+                "target": "node-1736492520068",
+                "condition": "still rejects"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-objection-not-looking",
+        "transitions": [
+            {
+                "id": "edge-obj-look-yes",
+                "intent": "agrees to whatsapp",
+                "target": "node-1736492520068",
+                "condition": "agrees to whatsapp"
+            },
+            {
+                "id": "edge-obj-look-no",
+                "intent": "still rejects",
+                "target": "node-1736492520068",
+                "condition": "still rejects"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1735267546732",
+        "transitions": [
+            {
+                "id": "edge-1735267546732",
+                "intent": "details provided",
+                "target": "node-1736323961832",
+                "condition": "details provided"
+            },
+            {
+                "id": "edge-fallback-location",
+                "intent": "unclear location",
+                "target": "fallback_location",
+                "condition": "unclear location"
+            },
+            {
+                "id": "edge-fallback-budget",
+                "intent": "unclear budget",
+                "target": "fallback_budget",
+                "condition": "unclear budget"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1736323961832",
+        "transitions": [
+            {
+                "id": "edge-1736323961832",
+                "intent": "interested in visit",
+                "target": "node-1735265015507",
+                "condition": "interested in visit"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1735265015507",
+        "transitions": [
+            {
+                "id": "edge-1735265058249",
+                "intent": "mentions date/time",
+                "target": "node-1735265209472",
+                "condition": "mentions date/time"
+            },
+            {
+                "id": "edge-objection-availability-later",
+                "intent": "uncertain/tell later",
+                "target": "node-1736492391269",
+                "condition": "uncertain/tell later"
+            },
+            {
+                "id": "edge-fallback-visit-datetime",
+                "intent": "unclear site visit time",
+                "target": "fallback_visit_datetime",
+                "condition": "unclear site visit time"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1735265209472",
+        "transitions": [
+            {
+                "id": "edge-1735265209472",
+                "intent": "done",
+                "target": "node-1736492925252",
+                "condition": "done"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1736492925252",
+        "transitions": [
+            {
+                "id": "edge-1736492941800",
+                "intent": "skip",
+                "target": "node-1735969972303",
+                "condition": "skip"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1736492391269",
+        "transitions": [
+            {
+                "id": "edge-1736492391269",
+                "intent": "mentions callback time",
+                "target": "node-1736567518748",
+                "condition": "mentions callback time"
+            },
+            {
+                "id": "edge-objection-callback-later",
+                "intent": "still uncertain",
+                "target": "node-1736492520068",
+                "condition": "still uncertain"
+            },
+            {
+                "id": "edge-fallback-callback-time",
+                "intent": "unclear callback time",
+                "target": "fallback_callback_time",
+                "condition": "unclear callback time"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1736567518748",
+        "transitions": [
+            {
+                "id": "edge-1736567541477",
+                "intent": "skip",
+                "target": "node-1736492485610",
+                "condition": "skip"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1736492485610",
+        "transitions": [
+            {
+                "id": "edge-1736492518201",
+                "intent": "skip",
+                "target": "node-1736492520068",
+                "condition": "skip"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1736510533232",
+        "transitions": [
+            {
+                "id": "edge-1736510533232",
+                "intent": "details provided",
+                "target": "node-1767420514711",
+                "condition": "details provided"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1767420514711",
+        "transitions": [
+            {
+                "id": "edge-1767420514711-0-rxuyo5wio",
+                "intent": "details provided",
+                "target": "node-1735969972303",
+                "condition": "details provided"
+            },
+            {
+                "id": "edge-fallback-property-type",
+                "intent": "unclear property type",
+                "target": "fallback_property_type",
+                "condition": "unclear property type"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node-1735970090937",
+        "transitions": [
+            {
+                "id": "edge-1735970178280",
+                "intent": "agrees",
+                "target": "node-1735264921453",
+                "condition": "agrees"
+            },
+            {
+                "id": "edge-1767090635108-e1hqp5q5w",
+                "intent": "refuses",
+                "target": "node-1736492391269",
+                "condition": "refuses"
+            }
+        ]
+    },
+    {
+        "from_node_id": "fallback_intent",
+        "transitions": [
+            {
+                "id": "edge-fallback-intent-return",
+                "intent": "resume intent question",
+                "target": "node-1735264921453",
+                "condition": "resume intent question"
+            }
+        ]
+    },
+    {
+        "from_node_id": "fallback_location",
+        "transitions": [
+            {
+                "id": "edge-fallback-location-return",
+                "intent": "resume location question",
+                "target": "node-1735267546732",
+                "condition": "resume location question"
+            }
+        ]
+    },
+    {
+        "from_node_id": "fallback_budget",
+        "transitions": [
+            {
+                "id": "edge-fallback-budget-return",
+                "intent": "resume budget question",
+                "target": "node-1735267546732",
+                "condition": "resume budget question"
+            }
+        ]
+    },
+    {
+        "from_node_id": "fallback_property_type",
+        "transitions": [
+            {
+                "id": "edge-fallback-property-type-return",
+                "intent": "resume property type question",
+                "target": "node-1767420514711",
+                "condition": "resume property type question"
+            }
+        ]
+    },
+    {
+        "from_node_id": "fallback_visit_datetime",
+        "transitions": [
+            {
+                "id": "edge-fallback-visit-datetime-return",
+                "intent": "resume visit time question",
+                "target": "node-1735265015507",
+                "condition": "resume visit time question"
+            }
+        ]
+    },
+    {
+        "from_node_id": "fallback_callback_time",
+        "transitions": [
+            {
+                "id": "edge-fallback-callback-time-return",
+                "intent": "resume callback time question",
+                "target": "node-1736492391269",
+                "condition": "resume callback time question"
+            }
+        ]
+    },
+    {
+        "from_node_id": "node_fallback_reschedule",
+        "transitions": [
+            {
+                "id": "edge-reschedule-accept",
+                "intent": "user provides alternate date",
+                "target": "node-1735265209472",
+                "condition": "user provides alternate date"
+            },
+            {
+                "id": "edge-reschedule-refuse",
+                "intent": "user still refuses",
+                "target": "node-1736492391269",
+                "condition": "user still refuses"
+            }
+        ]
+    }
+]

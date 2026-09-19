@@ -1,0 +1,1385 @@
+diff --git a/llm/__pycache__/__init__.cpython-312.pyc b/llm/__pycache__/__init__.cpython-312.pyc
+deleted file mode 100644
+index 43921c7..0000000
+Binary files a/llm/__pycache__/__init__.cpython-312.pyc and /dev/null differ
+diff --git a/llm/__pycache__/__init__.cpython-314.pyc b/llm/__pycache__/__init__.cpython-314.pyc
+deleted file mode 100644
+index c13204c..0000000
+Binary files a/llm/__pycache__/__init__.cpython-314.pyc and /dev/null differ
+diff --git a/llm/__pycache__/config.cpython-312.pyc b/llm/__pycache__/config.cpython-312.pyc
+deleted file mode 100644
+index dd852ed..0000000
+Binary files a/llm/__pycache__/config.cpython-312.pyc and /dev/null differ
+diff --git a/llm/__pycache__/config.cpython-314.pyc b/llm/__pycache__/config.cpython-314.pyc
+deleted file mode 100644
+index b0417c4..0000000
+Binary files a/llm/__pycache__/config.cpython-314.pyc and /dev/null differ
+diff --git a/llm/__pycache__/language_utils.cpython-312.pyc b/llm/__pycache__/language_utils.cpython-312.pyc
+deleted file mode 100644
+index 23cb663..0000000
+Binary files a/llm/__pycache__/language_utils.cpython-312.pyc and /dev/null differ
+diff --git a/llm/__pycache__/language_utils.cpython-314.pyc b/llm/__pycache__/language_utils.cpython-314.pyc
+deleted file mode 100644
+index f13ba78..0000000
+Binary files a/llm/__pycache__/language_utils.cpython-314.pyc and /dev/null differ
+diff --git a/llm/__pycache__/llm.cpython-312.pyc b/llm/__pycache__/llm.cpython-312.pyc
+deleted file mode 100644
+index b55bdf7..0000000
+Binary files a/llm/__pycache__/llm.cpython-312.pyc and /dev/null differ
+diff --git a/llm/__pycache__/llm.cpython-314.pyc b/llm/__pycache__/llm.cpython-314.pyc
+deleted file mode 100644
+index cf727f9..0000000
+Binary files a/llm/__pycache__/llm.cpython-314.pyc and /dev/null differ
+diff --git a/llm/__pycache__/llm_response_generator.cpython-312.pyc b/llm/__pycache__/llm_response_generator.cpython-312.pyc
+deleted file mode 100644
+index 1174929..0000000
+Binary files a/llm/__pycache__/llm_response_generator.cpython-312.pyc and /dev/null differ
+diff --git a/llm/__pycache__/llm_response_generator.cpython-314.pyc b/llm/__pycache__/llm_response_generator.cpython-314.pyc
+deleted file mode 100644
+index a0e7ac8..0000000
+Binary files a/llm/__pycache__/llm_response_generator.cpython-314.pyc and /dev/null differ
+diff --git a/llm/__pycache__/pipeline_logger.cpython-312.pyc b/llm/__pycache__/pipeline_logger.cpython-312.pyc
+deleted file mode 100644
+index 269e205..0000000
+Binary files a/llm/__pycache__/pipeline_logger.cpython-312.pyc and /dev/null differ
+diff --git a/llm/__pycache__/pipeline_logger.cpython-314.pyc b/llm/__pycache__/pipeline_logger.cpython-314.pyc
+deleted file mode 100644
+index b0dc189..0000000
+Binary files a/llm/__pycache__/pipeline_logger.cpython-314.pyc and /dev/null differ
+diff --git a/llm/__pycache__/state_manager.cpython-312.pyc b/llm/__pycache__/state_manager.cpython-312.pyc
+deleted file mode 100644
+index 9ba3c78..0000000
+Binary files a/llm/__pycache__/state_manager.cpython-312.pyc and /dev/null differ
+diff --git a/llm/__pycache__/state_manager.cpython-314.pyc b/llm/__pycache__/state_manager.cpython-314.pyc
+deleted file mode 100644
+index 1e089ce..0000000
+Binary files a/llm/__pycache__/state_manager.cpython-314.pyc and /dev/null differ
+diff --git a/llm/llm.py b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/llm/llm.py
+index 5fcbdb5..4143162 100644
+--- a/llm/llm.py
++++ b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/llm/llm.py	
+@@ -13,6 +13,7 @@ from typing import Any, Optional
+ from groq import AsyncGroq, APIError, APITimeoutError, RateLimitError
+ 
+ from . import config as cfg
++from .state_manager import StateManager
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -27,10 +28,8 @@ _client = AsyncGroq(api_key=cfg.GROQ_API_KEY, timeout=cfg.REQUEST_TIMEOUT_S)
+ 
+ 
+ def get_llm_client() -> AsyncGroq:
+-    """Return the global AsyncGroq client."""
+     return _client
+ 
+-
+ KNOWN_INTENTS = [
+     "confirm_identity",
+     "confirm",
+@@ -59,6 +58,7 @@ KNOWN_INTENTS = [
+     "user_question",
+     "suggest_time",
+     "confirm_availability",
++    "provide_info",
+ ]
+ 
+ INTENT_EXTRACTION_SYSTEM_PROMPT = """You are an intent classifier for a real estate voice agent.
+@@ -223,8 +223,30 @@ def _classify_local_intent(user_text: str) -> dict[str, Any] | None:
+     if has_location_suggestion:
+         return {"intent": "ask_location_suggestion", "entities": entities}
+ 
+-    # We no longer short-circuit budget here so that the LLM can extract
+-    # other entities like location and property_type from the same utterance.
++    # Check for direct city/location matches (local preprocessing bypass)
++    _LOCAL_LOCATIONS_MAP = {
++        "Jaipur": ["jaipur", "जयपुर", "जयपूर", "उजए पूर", "उजएपुर", "उजयपूर", "उदयपुर", "udaypur", "udaipur", "ujae pur", "ujaepur", "ujae poor", "ujaepoor"],
++        "Gurgaon": ["gurgaon", "gurugram", "गुड़गांव", "गुड़गांव", "गुरुग्राम", "गुड़गाँव", "gurgao", "gurgoan"],
++        "Zirakpur": ["zirakpur", "जीरकपुर", "झिरकपुर", "zirak", "jirakpur", "zirakhpur", "zirak pur"],
++        "Mathura": ["mathura", "मथुरा", "वृंदावन", "वृन्दावन", "vrindavan", "vrindaban", "vindravan"]
++    }
++    matching_text = re.sub(r'[.?।!,;]', '', user_text.lower()).strip()
++    matching_words = matching_text.split()
++    matched_loc = None
++    for canonical_loc, variants in _LOCAL_LOCATIONS_MAP.items():
++        for variant in variants:
++            if variant in matching_text or any(variant == w for w in matching_words):
++                matched_loc = canonical_loc
++                break
++        if matched_loc:
++            break
++            
++    if matched_loc:
++        entities["location"] = matched_loc
++        budget = _extract_budget_entity(user_text)
++        if budget:
++            entities["budget"] = budget
++        return {"intent": "provide_location", "entities": entities}
+ 
+     if any(phrase in clean_text for phrase in _WRONG_PERSON_HINTS):
+         return {"intent": "deny_identity", "entities": entities}
+@@ -248,17 +270,11 @@ def _classify_local_intent(user_text: str) -> dict[str, Any] | None:
+ 
+ 
+ def _enrich_intent_entities(user_text: str, intent: str, entities: dict[str, Any], state_manager: Optional[StateManager] = None) -> tuple[str, dict[str, Any]]:
+-    agent_type = "real_estate_sales"
+-    if state_manager:
+-        agent_type = state_manager.schema.get("agent_type", "real_estate_sales")
+-    
+-    if agent_type != "real_estate_sales":
+-        return intent, entities
+-
+     clean_text = (user_text or "").strip().lower()
+     entities = dict(entities)
+ 
+-    if not entities.get("budget"):
++    has_budget_field = "budget" in entities or (state_manager and "budget" in state_manager.extraction_fields)
++    if has_budget_field and not entities.get("budget"):
+         budget = _extract_budget_entity(user_text)
+         if budget:
+             entities["budget"] = budget
+@@ -266,7 +282,8 @@ def _enrich_intent_entities(user_text: str, intent: str, entities: dict[str, Any
+                 intent = "provide_budget"
+ 
+     # Deterministic location fallback
+-    if not entities.get("location"):
++    has_location_field = "location" in entities or (state_manager and "location" in state_manager.extraction_fields)
++    if has_location_field and not entities.get("location"):
+         _COMMON_LOCATIONS_MAP = {
+             "Mumbai": ["mumbai", "मुंबई", "bombay", "mumbai mein"],
+             "Pune": ["pune", "पुणे"],
+@@ -274,7 +291,10 @@ def _enrich_intent_entities(user_text: str, intent: str, entities: dict[str, Any
+             "Chennai": ["chennai", "चेन्नई"],
+             "Delhi": ["delhi", "new delhi", "दिल्ली"],
+             "Noida": ["noida", "नोएडा"],
+-            "Gurgaon": ["gurgaon", "gurugram", "गुड़गांव", "गुरुग्राम"],
++            "Gurgaon": ["gurgaon", "gurugram", "गुड़गांव", "गुरुग्राम", "gurgaon mein", "gurgaon me"],
++            "Jaipur": ["jaipur", "जयपुर", "जयपूर", "उजए पूर", "उजएपुर", "उदयपुर", "udaypur", "jaipur mein", "jaipur me"],
++            "Zirakpur": ["zirakpur", "जीरकपुर", "झिरकपुर", "zirakpur mein", "zirakpur me"],
++            "Mathura": ["mathura", "मथुरा", "वृंदावन", "vrindavan", "mathura mein", "mathura me", "vrindavan mein", "vrindavan me"],
+             "Hyderabad": ["hyderabad", "हैदराबाद"],
+             "Kolkata": ["kolkata", "calcutta", "कोलकाता"],
+             "Ahmedabad": ["ahmedabad", "अहमदाबाद"],
+@@ -305,33 +325,44 @@ def _enrich_intent_entities(user_text: str, intent: str, entities: dict[str, Any
+                 # Use simple 'in' to handle both english and devanagari without boundary issues
+                 if variant in clean_text:
+                     entities["location"] = canonical_loc
+-                    if intent == "unclear" or intent == "provide_budget":
+-                        intent = "provide_location" if not entities.get("budget") else "provide_location"
++                    if intent in {"unclear", "provide_info"}:
++                        intent = "provide_location"
+                     break
+             if entities.get("location"):
+                 break
+ 
+-    has_buy = any(phrase in clean_text for phrase in _BUY_HINTS) or "buy" in clean_text.split()
+-    has_invest = any(phrase in clean_text for phrase in _INVEST_HINTS)
+-    has_rent = any(phrase in clean_text for phrase in _RENT_HINTS) or "rent" in clean_text.split()
+-
+-    if has_buy:
+-        entities["intent_value"] = "buy"
+-        if intent not in {"confirm", "deny", "deny_interest", "deny_time", "deny_identity", "deny_visit_time"}:
+-            intent = "provide_intent"
+-    elif has_invest:
+-        entities["intent_value"] = "invest"
+-        if intent not in {"confirm", "deny", "deny_interest", "deny_time", "deny_identity", "deny_visit_time"}:
+-            intent = "provide_intent"
+-    elif has_rent:
+-        entities["intent_value"] = "rent"
+-        if intent not in {"confirm", "deny", "deny_interest", "deny_time", "deny_identity", "deny_visit_time"}:
++    has_intent_field = "intent_value" in entities or (state_manager and "intent_value" in state_manager.extraction_fields)
++    if has_intent_field:
++        has_buy = any(phrase in clean_text for phrase in _BUY_HINTS) or "buy" in clean_text.split()
++        has_invest = any(phrase in clean_text for phrase in _INVEST_HINTS)
++        has_rent = any(phrase in clean_text for phrase in _RENT_HINTS) or "rent" in clean_text.split()
++
++        if has_buy:
++            entities["intent_value"] = "buy"
++            if intent not in {"confirm", "deny", "deny_interest", "deny_time", "deny_identity", "deny_visit_time"}:
++                intent = "provide_intent"
++        elif has_invest:
++            entities["intent_value"] = "invest"
++            if intent not in {"confirm", "deny", "deny_interest", "deny_time", "deny_identity", "deny_visit_time"}:
++                intent = "provide_intent"
++        elif has_rent:
++            entities["intent_value"] = "rent"
++            if intent not in {"confirm", "deny", "deny_interest", "deny_time", "deny_identity", "deny_visit_time"}:
++                intent = "provide_intent"
++
++        # Always enforce intent=provide_intent if intent_value was successfully assigned by LLM or overrides
++        # but the intent itself was marked as unclear.
++        if entities.get("intent_value") in {"buy", "rent", "invest"} and intent not in {"confirm", "deny", "deny_interest", "deny_time", "deny_identity", "deny_visit_time"}:
+             intent = "provide_intent"
+ 
+-    # Always enforce intent=provide_intent if intent_value was successfully assigned by LLM or overrides
+-    # but the intent itself was marked as unclear.
+-    if entities.get("intent_value") in {"buy", "rent", "invest"} and intent not in {"confirm", "deny", "deny_interest", "deny_time", "deny_identity", "deny_visit_time"}:
+-        intent = "provide_intent"
++    # Promote unclear/provide_info intent to specific slot-filling intent if entities are populated
++    if intent in {"unclear", "provide_info"}:
++        if entities.get("location"):
++            intent = "provide_location"
++        elif entities.get("budget"):
++            intent = "provide_budget"
++        elif entities.get("intent_value"):
++            intent = "provide_intent"
+ 
+     return intent, entities
+ 
+@@ -608,110 +639,324 @@ def generate_phrase_constrained_response(user_text: str, context: dict) -> str:
+ generate_informational_response = generate_phrase_constrained_response
+ 
+ 
+-def _extract_summary_from_prompt(global_prompt: str) -> Optional[str]:
+-    """Extract complete company knowledge summary markdown from global prompt."""
+-    if not global_prompt:
+-        return None
+-    marker = "Complete Company Knowledge Summary:"
+-    idx = global_prompt.find(marker)
+-    if idx == -1:
+-        return None
+-    summary = global_prompt[idx + len(marker):].strip()
++def _extract_summary_from_prompt(global_prompt: str) -> str:
++    """Extract complete company knowledge summary from global prompt template."""
++    match = re.search(r"Complete Company Knowledge Summary:\n(.*)", global_prompt, re.DOTALL)
++    if match:
++        return match.group(1).strip()
++    return global_prompt
++
++
++async def _classify_message(
++    user_text: str,
++    current_node: Optional[dict[str, Any]],
++    language: str,
++) -> str:
++    """Classify user text as node_response, company_question, general_query, small_talk, or unknown."""
++    node_info = ""
++    if current_node:
++        node_response = current_node.get("response") or ""
++        node_instruction = (current_node.get("instruction") or {}).get("text") or ""
++        node_info = (
++            f"Active Node Name: {current_node.get('name')}\n"
++            f"Active Node Question/Prompt: {node_response}\n"
++            f"Active Node Goal: {node_instruction}\n"
++            f"Expected Slots to fill: {current_node.get('collects', [])}"
++        )
+     
+-    # Strip any trailing instruction added during generation
+-    trailing_instruction = "Use only verified website facts and keep unsupported claims out of the call."
+-    t_idx = summary.find(trailing_instruction)
+-    if t_idx != -1:
+-        summary = summary[:t_idx].strip()
+-    return summary
+-
+-
+-def _retrieve_semantic_chunks_tfidf(query: str, summary_markdown: str) -> list[str]:
+-    """Perform TF-IDF RAG chunk retrieval over summary markdown sections."""
+-    if not query or not summary_markdown:
+-        return []
++    system_prompt = (
++        "You are an expert intent classifier for a voice calling assistant.\n"
++        "Analyze the user's message and the active node's context, and classify the user's intent into exactly one of these categories:\n\n"
++        "1. \"node_response\": The user is answering the active node's question or providing details (like location, budget, name, availability, or preferences) related to the current sales/advisory flow.\n"
++        "2. \"company_question\": The user is asking a factual question about the company itself, its products, services, CEO, founders, office location, contact info, support/helpdesk, pricing details, or general capabilities.\n"
++        "3. \"general_query\": A standard conversational greeting, acknowledgment, or simple polite phrase (e.g. 'hello', 'ok', 'yes', 'no problem', 'thanks').\n"
++        "4. \"small_talk\": Conversational chitchat unrelated to the company or current flow (e.g., 'how are you', 'what is your name', 'are you a robot').\n"
++        "5. \"unknown\": The user's input is garbled, unclear, or does not fit any of the above categories.\n\n"
++        "Format your response as a valid JSON object matching this schema:\n"
++        "{\n"
++        "  \"classification\": \"node_response\" | \"company_question\" | \"general_query\" | \"small_talk\" | \"unknown\",\n"
++        "  \"reason\": \"A brief explanation of why this classification was chosen.\"\n"
++        "}"
++    )
++
++    messages = [
++        {"role": "system", "content": system_prompt},
++        {"role": "user", "content": (
++            f"Active Node Context:\n{node_info}\n\n"
++            f"User Message: \"{user_text}\"\n"
++            f"Language: {language}"
++        )}
++    ]
++
++    try:
++        completion = await _client.chat.completions.create(
++            model=cfg.MODEL_NAME,
++            messages=messages,
++            response_format={"type": "json_object"},
++            temperature=0.0,
++            max_tokens=100
++        )
++        raw_res = completion.choices[0].message.content or ""
++        res_data = json.loads(raw_res)
++        val = str(res_data.get("classification") or "node_response").strip().lower()
++        if val in {"node_response", "company_question", "general_query", "small_talk", "unknown"}:
++            return val
++        return "node_response"
++    except Exception as exc:
++        logger.warning("Failed to classify user message: %s", exc)
++        return "node_response"
++
++
++def _pure_python_tfidf_similarity(query: str, docs: list[str]) -> list[float]:
++    """Calculate TF-IDF Cosine Similarity in pure python. No sklearn needed!"""
++    import math
++    from collections import Counter
+     
+-    # Chunk by markdown headers or sections
+-    chunks = re.split(r'\n(?=##? )', summary_markdown)
+-    chunks = [c.strip() for c in chunks if c.strip()]
+-    if not chunks:
+-        return []
++    def tokenize(text: str) -> list[str]:
++        return re.findall(r'\b\w+\b', text.lower())
+ 
++    query_tokens = tokenize(query)
++    doc_tokens_list = [tokenize(d) for d in docs]
++    
++    all_terms = set(query_tokens)
++    for doc_tokens in doc_tokens_list:
++        all_terms.update(doc_tokens)
++        
++    df = {}
++    N = len(docs)
++    for term in all_terms:
++        df[term] = sum(1 for doc_tokens in doc_tokens_list if term in doc_tokens)
++        
++    idf = {}
++    for term, doc_count in df.items():
++        idf[term] = math.log((1 + N) / (1 + doc_count)) + 1.0
++
++    doc_vectors = []
++    for doc_tokens in doc_tokens_list:
++        tf = Counter(doc_tokens)
++        vec = {}
++        for term in all_terms:
++            if term in tf:
++                vec[term] = tf[term] * idf[term]
++        doc_vectors.append(vec)
++        
++    q_tf = Counter(query_tokens)
++    q_vec = {}
++    for term in all_terms:
++        if term in q_tf:
++            q_vec[term] = q_tf[term] * idf[term]
++            
++    def magnitude(vec: dict[str, float]) -> float:
++        return math.sqrt(sum(v*v for v in vec.values()))
++        
++    q_mag = magnitude(q_vec)
++    if q_mag == 0:
++        return [0.0] * N
++        
++    similarities = []
++    for d_vec in doc_vectors:
++        d_mag = magnitude(d_vec)
++        if d_mag == 0:
++            similarities.append(0.0)
++            continue
++        dot_product = sum(q_vec.get(term, 0.0) * d_vec.get(term, 0.0) for term in q_vec)
++        similarities.append(dot_product / (q_mag * d_mag))
++        
++    return similarities
++
++
++def _retrieve_semantic_chunks_tfidf(query: str, summary_markdown: str) -> tuple[list[str], list[str], list[float]]:
++    """Parse Markdown by H2 headers and use scikit-learn or pure python TF-IDF Cosine Similarity to retrieve chunks."""
++    if not summary_markdown or not summary_markdown.strip():
++        return [], [], []
++
++    sections = re.split(r'\n(?=## )', "\n" + summary_markdown.strip())
++    sections = [s.strip() for s in sections if s.strip()]
++    if not sections:
++        return [], [], []
++
++    SYNONYMS = {
++        "support": ["customer care", "helpdesk", "contact", "support", "complaint", "phone", "email", "address", "office", "location", "reach", "hours"],
++        "contact": ["phone", "email", "address", "office", "location", "reach", "contact", "connect", "call", "map", "hours"],
++        "ceo": ["ceo", "founder", "leadership", "owner", "president", "chief executive", "management", "head", "team"],
++        "founder": ["ceo", "founder", "leadership", "owner", "president", "chief executive", "management", "head", "team"],
++        "product": ["product", "project", "apartment", "flat", "villa", "plot", "pricing", "price", "cost", "offer", "luxury", "amenities", "rera"],
++        "pricing": ["price", "cost", "pricing", "rate", "fee", "payment", "subscription", "offer", "discount"],
++        "feature": ["feature", "amenity", "amenities", "specifications", "benefits", "technologies"],
++        "security": ["security", "compliance", "privacy", "gdpr", "safe", "data protection"],
++        "careers": ["careers", "job", "hiring", "culture", "employee", "work"],
++        "headquarters": ["headquarters", "hq", "corporate office", "office", "location", "address", "contact"],
++        "unique": ["unique", "differentiator", "why choose", "mission", "vision", "values", "core values", "advantages"],
++    }
++
++    query_words = re.findall(r'\b\w+\b', query.lower())
++    expanded_words = set(query_words)
++    for word in query_words:
++        if word in SYNONYMS:
++            expanded_words.update(SYNONYMS[word])
++    expanded_query = " ".join(expanded_words)
++
++    # Try sklearn TfidfVectorizer
+     try:
+         from sklearn.feature_extraction.text import TfidfVectorizer
+         from sklearn.metrics.pairwise import cosine_similarity
+         
+         vectorizer = TfidfVectorizer(stop_words='english')
+-        tfidf_matrix = vectorizer.fit_transform(chunks)
+-        query_vector = vectorizer.transform([query])
+-        similarities = cosine_similarity(query_vector, tfidf_matrix).flatten()
++        tfidf_matrix = vectorizer.fit_transform(sections)
++        query_vec = vectorizer.transform([expanded_query])
+         
+-        # Sort and filter by similarity threshold
+-        top_indices = similarities.argsort()[::-1]
+-        results = []
+-        for idx in top_indices:
+-            # Simple threshold to ensure relevant chunks are returned
+-            if similarities[idx] > 0.05:
+-                results.append(chunks[idx])
+-        return results[:3]
++        similarities = cosine_similarity(query_vec, tfidf_matrix).flatten()
+     except Exception as exc:
+-        logger.error("[RAG] TF-IDF retrieval failed: %s", exc)
+-        return []
++        similarities = _pure_python_tfidf_similarity(expanded_query, sections)
++
++    scored_sections = []
++    for idx, score in enumerate(similarities):
++        if score > 0.05:  # Similarity threshold
++            sec = sections[idx]
++            lines = sec.split("\n")
++            heading = lines[0].replace("#", "").strip() if lines else "Section"
++            scored_sections.append((float(score), heading, sec))
++
++    scored_sections.sort(key=lambda x: x[0], reverse=True)
++    top_sections = scored_sections[:3]
++
++    headings = [heading for score, heading, sec in top_sections]
++    chunks = [sec for score, heading, sec in top_sections]
++    scores = [score for score, heading, sec in top_sections]
++
++    if not chunks and sections:
++        for idx, sec in enumerate(sections):
++            lines = sec.split("\n")
++            heading = lines[0].replace("#", "").strip() if lines else "Section"
++            if "overview" in heading.lower() or "about" in heading.lower():
++                return [heading], [sec], [1.0]
++        first_lines = sections[0].split("\n")
++        first_heading = first_lines[0].replace("#", "").strip() if first_lines else "Overview"
++        return [first_heading], [sections[0]], [1.0]
++
++    return headings, chunks, scores
++
++
++def _search_json_knowledge(user_text: str, nodes: list[dict[str, Any]]) -> Optional[str]:
++    """Check if the user's query can be answered directly by the predefined JSON nodes/phrases."""
++    query_clean = user_text.lower().strip().rstrip("?").strip()
++    for node in nodes:
++        node_name = (node.get("name") or "").lower()
++        node_resp = (node.get("response") or "").lower()
++        if "ceo" in query_clean and "ceo" in node_name:
++            if node.get("response"):
++                return node.get("response")
++        if "headquarters" in query_clean or "hq" in query_clean or "office" in query_clean:
++            if "office" in node_name or "headquarter" in node_name:
++                if node.get("response"):
++                    return node.get("response")
++        if "support" in query_clean or "contact" in query_clean or "help" in query_clean:
++            if "support" in node_name or "contact" in node_name:
++                if node.get("response"):
++                    return node.get("response")
++    for node in nodes:
++        node_name = (node.get("name") or "").lower()
++        if node_name and node_name in query_clean:
++            if node.get("response"):
++                return node.get("response")
++    return None
+ 
+ 
+-async def _generate_answer_from_chunks(user_text: str, retrieved_chunks: list[str], language: str) -> str:
+-    """Generate dynamic response based on retrieved semantic chunks."""
+-    context = "\n\n".join(retrieved_chunks)
++async def _generate_answer_from_chunks(
++    user_text: str,
++    chunks: list[str],
++    language: str,
++) -> str:
++    """Ask LLM to format a concise, conversational answer based ONLY on the retrieved summary chunks."""
+     system_prompt = (
+-        "You are Neha — a sharp, emotionally intelligent customer assistant on a phone call.\n"
+-        "Answer the user's question using ONLY the provided verified facts.\n"
+-        "Keep your response extremely concise, conversational, and direct (maximum 2 sentences, 30 words).\n"
+-        "Do NOT ask any follow-up questions.\n"
+-        "Do NOT speculate, assume, or hallucinate. If the answer cannot be fully found in the context, "
+-        "respond that you don't have that specific detail.\n"
+-        f"Respond in the language: {language}."
++        "You are a factual, concise customer advisory voice assistant.\n"
++        "Your task is to answer the user's question about the company using ONLY the retrieved facts below.\n\n"
++        "Retrieved Company Knowledge Base Chunks:\n"
++        f"{chr(10).join(chunks)}\n\n"
++        "Constraints:\n"
++        "- Answer the question directly in a friendly, professional voice.\n"
++        "- Max 2 sentences, 20-30 words.\n"
++        "- Do not ask any follow-up questions in this response.\n"
++        "- Do not assume, guess, invent, or hallucinate any facts. If the answer is not in the facts, say exactly: "
++        "'I don't have that detail right now, but I can check and have our advisor get back to you.'\n"
++        f"- Respond in the requested active language: {language}."
+     )
+-    user_prompt = f"Context:\n{context}\n\nQuestion: {user_text}"
+-    
+     messages = [
+         {"role": "system", "content": system_prompt},
+-        {"role": "user", "content": user_prompt}
++        {"role": "user", "content": user_text}
+     ]
+-    
+-    logger.info("[RAG REASONING] Generating answer from %d retrieved chunks...", len(retrieved_chunks))
+-    response = await _async_call_groq_api(
+-        messages,
+-        max_tokens=60,
+-        temperature=0.0
+-    )
+-    return response.strip()
++    try:
++        completion = await _client.chat.completions.create(
++            model=cfg.MODEL_NAME,
++            messages=messages,
++            temperature=0.1,
++            max_tokens=80
++        )
++        return (completion.choices[0].message.content or "").strip()
++    except Exception as exc:
++        logger.error("Failed generating chunk-based answer: %s", exc)
++        return "I don't have that detail right now, but I can check and have our advisor get back to you."
+ 
+ 
+-async def _generate_llm_fallback_answer(user_text: str, summary_markdown: str, language: str) -> str:
+-    """Generate fallback response using the entire summary markdown."""
++async def _generate_llm_fallback_answer(
++    user_text: str,
++    summary_markdown: str,
++    language: str,
++) -> str:
++    """Fallback LLM call when no specific chunks are retrieved, using the whole summary context."""
+     system_prompt = (
+-        "You are Neha — a sharp, emotionally intelligent customer assistant on a phone call.\n"
+-        "Answer the user's question using the provided company knowledge summary.\n"
+-        "Keep your response extremely concise and conversational (maximum 2 sentences, 30 words).\n"
+-        "Do NOT ask any follow-up questions.\n"
+-        "Do NOT speculate, assume, or hallucinate. If the answer cannot be found in the knowledge summary, "
+-        "respond that you don't have that specific detail.\n"
+-        f"Respond in the language: {language}."
++        "You are a factual customer advisory voice assistant.\n"
++        "Answer the user's question using the company summary context below.\n\n"
++        "Company Summary Context:\n"
++        f"{summary_markdown}\n\n"
++        "Constraints:\n"
++        "- Do not assume, guess, or hallucinate any details. If not found, say exactly: "
++        "'I don't have that detail right now, but I can check and have our advisor get back to you.'\n"
++        "- Max 2 sentences, 20-30 words.\n"
++        f"- Respond in the requested active language: {language}."
+     )
+-    user_prompt = f"Knowledge Summary:\n{summary_markdown}\n\nQuestion: {user_text}"
+-    
+     messages = [
+         {"role": "system", "content": system_prompt},
+-        {"role": "user", "content": user_prompt}
++        {"role": "user", "content": user_text}
+     ]
++    try:
++        completion = await _client.chat.completions.create(
++            model=cfg.MODEL_NAME,
++            messages=messages,
++            temperature=0.2,
++            max_tokens=80
++        )
++        return (completion.choices[0].message.content or "").strip()
++    except Exception as exc:
++        logger.error("Failed generating LLM fallback answer: %s", exc)
++        return "I don't have that detail right now, but I can check and have our advisor get back to you."
++
++
++def _get_resume_bridge(
++    current_node: dict[str, Any],
++    context: dict[str, Any],
++    language: str,
++) -> tuple[str, str]:
++    """Returns (resume_question, combined_bridge_text) to return to previous flow node."""
++    from .llm_response_generator import _resolve_template_response
+     
+-    logger.info("[RAG FALLBACK REASONING] Generating fallback answer from entire summary...")
+-    response = await _async_call_groq_api(
+-        messages,
+-        max_tokens=80,
+-        temperature=0.0
+-    )
+-    return response.strip()
++    resume_question = _resolve_template_response(current_node, context, language)
++    if not resume_question:
++        return "", ""
++
++    resume_question_clean = resume_question.strip().rstrip("?").rstrip()
++    if not resume_question_clean:
++        return "", ""
++
++    if language in ("hi", "hinglish"):
++        prefix = "Toh, hamari baat-cheet par waapas aate hain, "
++    elif language == "mr":
++        prefix = "तर, आपल्या संभाषणाकडे परत येत, "
++    else:
++        prefix = "Now, coming back to our discussion, "
++
++    combined = f"{prefix}{resume_question_clean}?"
++    return resume_question_clean, combined
+ 
+ 
+ async def generate_response(
+@@ -728,7 +973,6 @@ async def generate_response(
+     - StateManager handles ONLY state transitions (returns TurnResult)
+     - LLMResponseGenerator handles ONLY response generation
+     """
+-    del conversation_history
+     from .llm_response_generator import generate_response_for_turn
+     from .state_manager import _finalize_response_text
+ 
+@@ -741,55 +985,97 @@ async def generate_response(
+     if runtime_context:
+         state_manager.conversation_data.update(runtime_context)
+ 
+-    # ── RAG summary extraction and conditional semantic search/retrieval ──
+-    global_prompt = ""
+-    if state_manager:
+-        global_prompt = getattr(state_manager, "global_prompt", "") or state_manager.schema.get("conversationFlow", {}).get("global_prompt", "")
+-    summary_markdown = _extract_summary_from_prompt(global_prompt)
+-
+-    intent_data = None
+-    is_actionable = True
+-    if state_manager and hasattr(state_manager, "is_actionable"):
+-        is_actionable = state_manager.is_actionable(user_text)
++    current_node = state_manager.get_current_node()
++    current_node_id = state_manager.current_node_id
+ 
+-    if allow_transition and is_actionable:
+-        intent_data = await extract_intent(user_text, state_manager=state_manager)
+-        intent = intent_data.get("intent", "unclear")
++    # ── Pre-Transition Interruption Check ─────────────────────────────────────
++    global_prompt = getattr(state_manager, "global_prompt", "") or state_manager.schema.get("global_prompt", "")
++    summary_markdown = _extract_summary_from_prompt(global_prompt)
++    
++    # Classify the input
++    classification = "node_response"
++    if current_node and user_text and user_text.strip():
++        classification = await _classify_message(user_text, current_node, language)
++
++    if classification == "company_question":
++        # Search JSON and Summary & Answer
++        nodes = state_manager.schema.get("conversationFlow", {}).get("nodes", [])
+         
+-        # Check if user is asking a question/seeking company knowledge/FAQ
+-        is_question = (
+-            intent in ("user_question", "ask_off_topic") or
+-            user_text.strip().endswith("?") or
+-            any(w in user_text.lower().split() for w in ("what", "where", "how", "when", "why", "who", "price", "pricing", "cost", "fee", "fees", "address", "phone", "email"))
+-        )
++        # 1. JSON Lookup
++        json_answer = _search_json_knowledge(user_text, nodes)
++        json_matched = bool(json_answer)
++        
++        answer = ""
++        answer_source = "Unknown"
++        retrieved_headings = []
++        retrieved_scores = []
++        llm_called = False
++        context_len = 0
+         
+-        if summary_markdown and is_question:
+-            # 1. TF-IDF retrieval
+-            retrieved_chunks = _retrieve_semantic_chunks_tfidf(user_text, summary_markdown)
++        if json_matched:
++            answer = json_answer
++            answer_source = "JSON"
++        else:
++            # 2. Semantic retrieval on summary
++            retrieved_headings, retrieved_chunks, retrieved_scores = _retrieve_semantic_chunks_tfidf(
++                user_text, summary_markdown
++            )
++            
+             if retrieved_chunks:
+-                rag_response = await _generate_answer_from_chunks(user_text, retrieved_chunks, language)
+-                finalized = _finalize_response_text(rag_response).strip()
+-                if finalized and not any(phrase in finalized.lower() for phrase in ["don't have that", "don't have details", "do not have", "cannot find", "not mentioned", "details not fetched", "list pending"]):
+-                    if hasattr(state_manager, "record_response"):
+-                        state_manager.record_response(finalized)
+-                    return finalized, False
++                llm_called = True
++                answer = await _generate_answer_from_chunks(user_text, retrieved_chunks, language)
++                answer_source = "Summary"
++                context_len = sum(len(c) for c in retrieved_chunks)
++            else:
++                # 3. LLM fallback
++                llm_called = True
++                answer = await _generate_llm_fallback_answer(user_text, summary_markdown, language)
++                answer_source = "LLM"
++                context_len = len(summary_markdown)
++
++        # Get resume bridge
++        resume_question, resume_bridge = _get_resume_bridge(
++            current_node,
++            state_manager.conversation_data,
++            language,
++        )
++        
++        finalized_response = answer
++        if resume_bridge:
++            finalized_response = f"{answer} {resume_bridge}"
++
++        # Detailed runtime logs matching the user checklist exactly
++        logger.info(
++            "[INTERRUPTION LAYER]\n"
++            f"  - Incoming User Query: \"{user_text}\"\n"
++            f"  - Intent Classification: {classification}\n"
++            f"  - Current Conversation Node: {current_node_id}\n"
++            f"  - JSON Search: Checked {len(nodes)} nodes\n"
++            f"  - JSON Match Found?: {json_matched}\n"
++            f"  - Company Summary Loaded: {bool(summary_markdown)}\n"
++            f"  - Semantic Retrieval Started: True\n"
++            f"  - Retrieved Chunks: {retrieved_headings}\n"
++            f"  - Similarity Scores: {retrieved_scores}\n"
++            f"  - LLM Invoked?: {llm_called}\n"
++            f"  - LLM Context Size: {context_len} chars\n"
++            f"  - Final Answer Source: {answer_source}\n"
++            f"  - Resume Previous Node: \"{resume_question}\""
++        )
++        
++        # Record response for anti-repetition
++        if hasattr(state_manager, "record_response"):
++            state_manager.record_response(finalized_response)
+             
+-            # 2. Entire prompt summary fallback
+-            fallback_response = await _generate_llm_fallback_answer(user_text, summary_markdown, language)
+-            finalized = _finalize_response_text(fallback_response).strip()
+-            if finalized and not any(phrase in finalized.lower() for phrase in ["don't have that", "don't have details", "do not have", "cannot find", "not mentioned", "details not fetched", "list pending"]):
+-                if hasattr(state_manager, "record_response"):
+-                    state_manager.record_response(finalized)
+-                return finalized, False
++        # Return answer + resume bridge, is_terminal=False
++        return finalized_response, False
+ 
+     # ── Step 1: StateManager — transition only (no response generation) ──
+     if not allow_transition:
+         turn = await asyncio.to_thread(state_manager.execute_greeting_transition, user_text)
+-    elif not is_actionable:
++    elif getattr(state_manager, "is_actionable", None) and not state_manager.is_actionable(user_text):
+         turn = await asyncio.to_thread(state_manager.execute_noise_transition, user_text)
+     else:
+-        if intent_data is None:
+-            intent_data = await extract_intent(user_text, state_manager=state_manager)
++        intent_data = await extract_intent(user_text, state_manager=state_manager)
+         turn = await asyncio.to_thread(state_manager.execute_transition, user_text, intent_data)
+ 
+     if not turn.node:
+diff --git a/llm/llm_response_generator.py b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/llm/llm_response_generator.py
+index b42806c..a1c12b9 100644
+--- a/llm/llm_response_generator.py
++++ b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/llm/llm_response_generator.py	
+@@ -97,12 +97,14 @@ _TEMPLATE_ONLY_NODES = {
+ 
+ 
+ def is_llm_node(node: dict[str, Any]) -> bool:
+-    node_id = str(node.get("id", ""))
+-    if node_id in _TEMPLATE_ONLY_NODES:
+-        return False
+-    if node.get("type") in ("end", "terminal"):
+-        return False
+-    return True
++    node_id = node.get("id")
++    if node_id in _LLM_RESPONSE_NODES:
++        return True
++    if node.get("collects"):
++        return True
++    if node.get("type") == "fallback":
++        return True
++    return False
+ 
+ 
+ def _classify_node_goal(node: dict[str, Any], state_manager: Optional[Any] = None) -> str:
+@@ -185,7 +187,7 @@ def _build_llm_user_message(
+ ) -> str:
+     """Build the user message matching the clean prompt format."""
+     phrases_block = "\n".join(f"- {p}" for p in json_phrases) if json_phrases else "(none)"
+-    already_asked_str = ", ".join([k for k, v in asked_flags.items() if v]) if asked_flags else "None"
++    collected_details_str = ", ".join([k for k, v in context_data.items() if v and k not in {"memory", "asked_flags", "last_response", "active_language"}]) or "None"
+     
+     # Dynamically build the context fields block
+     context_lines = []
+@@ -202,7 +204,7 @@ def _build_llm_user_message(
+         f"context:\n"
+         f"{context_block}\n"
+         f"  language: {language}\n"
+-        f"  already_asked: {already_asked_str}\n"
++        f"  collected_details: {collected_details_str}\n"
+         f"  last_response: {last_response or 'None'}\n\n"
+         f"user_input: \"{user_input}\""
+     )
+@@ -217,8 +219,8 @@ def _answer_user_question(question_type: str, language: str, state_manager: Opti
+     global_prompt = ""
+     if state_manager:
+         agent_name = state_manager.schema.get("agent_name", "Agent")
+-        agent_type = state_manager.schema.get("agent_type", "real_estate_sales")
+-        global_prompt = state_manager.schema.get("global_prompt", "")
++        agent_type = state_manager.schema.get("agent_metadata", {}).get("agent_type") or state_manager.schema.get("agent_type") or "real_estate_sales"
++        global_prompt = (state_manager.global_prompt or state_manager.schema.get("global_prompt", "")) if hasattr(state_manager, "global_prompt") else state_manager.schema.get("global_prompt", "")
+ 
+     type_label = {
+         "real_estate_sales": "Real Estate team",
+@@ -227,15 +229,24 @@ def _answer_user_question(question_type: str, language: str, state_manager: Opti
+         "education": "Education counselling team",
+         "recruitment": "Recruitment team",
+         "healthcare": "Healthcare team",
+-    }.get(agent_type, "Customer support team")
++    }.get(agent_type)
++    if not type_label:
++        if "sales" in agent_type.lower():
++            type_label = "Sales team"
++        elif "advisory" in agent_type.lower() or "advisor" in agent_type.lower():
++            type_label = "Advisory team"
++        else:
++            type_label = "Customer support team"
+ 
+-    purpose_desc = "your property interest" if agent_type == "real_estate_sales" else "following up on your request"
+-    if "patient" in global_prompt.lower() or "clinic" in global_prompt.lower():
++    purpose_desc = "following up on your request"
++    if agent_type == "healthcare" or "clinic" in global_prompt.lower() or "doctor" in global_prompt.lower():
+         purpose_desc = "scheduling your doctor's appointment"
+-    elif "recruit" in global_prompt.lower() or "job" in global_prompt.lower() or "candidate" in global_prompt.lower():
++    elif agent_type == "recruitment" or "job application" in global_prompt.lower():
+         purpose_desc = "your job application"
+-    elif "property" in global_prompt.lower() or "real estate" in global_prompt.lower():
++    elif agent_type == "real_estate_sales" or "property" in global_prompt.lower() or "real estate" in global_prompt.lower():
+         purpose_desc = "your property interest"
++    elif agent_type == "education" or "course interest" in global_prompt.lower() or "admission" in global_prompt.lower():
++        purpose_desc = "your course inquiry"
+ 
+     if language in ("hi", "hinglish"):
+         if question_type == "identity":
+@@ -446,13 +457,13 @@ def build_response_system_prompt(state_manager: Optional[Any], language: str) ->
+     prompt_builder.append(f"{lang_inst}\n")
+ 
+     prompt_builder.append("## RESPONSE GOVERNANCE & CONSTRAINTS")
+-    prompt_builder.append("- You MUST process and directly acknowledge what the user said in user_input before asking the next question or moving to the node goal.")
+-    prompt_builder.append("- Never use hardcoded or repetitive filler answers.")
++    prompt_builder.append("- You must answer the user's questions or acknowledge their input first, then guide them to the next step.")
+     prompt_builder.append("- Max 2 sentences.")
+     prompt_builder.append("- Max 20-30 words.")
+-    prompt_builder.append("- Ask exactly ONE question matching the current node's goal/missing slots.")
++    prompt_builder.append("- Ask exactly ONE question matching the current node's missing slots.")
+     prompt_builder.append("- Avoid repetition. Never repeat the previous question if you have already got the answer.")
+-    prompt_builder.append("- NEVER invent or hallucinate any details (like specific budgets, cities, dates, times, or property details) that have not been explicitly confirmed by the user or present in your script.")
++    prompt_builder.append("- STRICT TRUTH AND ANTI-HALLUCINATION RULE: NEVER assume, guess, invent, or hallucinate any facts, details, locations, amenities, pricing, timeline, or specifications. You are strictly allowed to use facts explicitly mentioned in the 'Primary Agent Script' or 'json_phrases'.")
++    prompt_builder.append("- MISSING INFORMATION FALLBACK: If the user asks a question about details not explicitly provided in your prompt or script (such as specific flat sizes, amenities, project launch dates, interest rates, or doctor degrees), you MUST say: 'I don't have that detail right now, but I can check and have our advisor get back to you.' (or localized equivalent), and then immediately proceed to the current node goal.")
+     prompt_builder.append("- Plain text only. No JSON, no markdown, no conversational role labels.")
+     
+     return "\n".join(prompt_builder)
+@@ -594,8 +605,9 @@ async def generate_response_for_turn(turn: TurnResult, state_manager: Optional[A
+         return DEESCALATION_RESPONSES[idx]
+ 
+     # ── Path 4: LLM-powered response for qualification/fallback nodes ─────
+-    # Generate dynamic LLM response for all conversational nodes (processes user input and advances node goal)
+-    if is_llm_node(node):
++    # ONLY use LLM when staying on the same node (needs clarification/rephrasing).
++    # If the node changed (user answered correctly), skip LLM and use template directly.
++    if is_llm_node(node) and not turn.node_changed:
+         llm_response = await _call_llm_for_response(
+             node,
+             context_data=context,
+@@ -622,6 +634,8 @@ async def generate_response_for_turn(turn: TurnResult, state_manager: Optional[A
+                     return finalized
+         # LLM failed → fall through to template
+         logger.warning("[LLM RESPONSE] Falling back to template for %s", node_id)
++    elif is_llm_node(node) and turn.node_changed:
++        logger.info("[SKIP LLM] Node changed, using template directly for %s", node_id)
+ 
+     # ── Path 5: Template response (fast path) ────────────────────────────
+     # ISSUE 5 FIX: Suppress all anti-repeat guards and nudges for terminal states.
+@@ -632,8 +646,8 @@ async def generate_response_for_turn(turn: TurnResult, state_manager: Optional[A
+         logger.info("[TERMINAL RESPONSE] %s: \"%s\"", node_id, finalized)
+         return finalized
+ 
+-    if node_id == "fallback_location" and _is_location_suggestion_request(user_input):
+-        return _location_suggestion_response(language)
++    if node_id in {"fallback_location", "fallback-city"} and _is_location_suggestion_request(user_input):
++        return _location_suggestion_response(language, state_manager)
+ 
+     response = _resolve_template_response(node, context, language)
+     finalized = _finalize_response(response) if response else ""
+@@ -669,12 +683,50 @@ def _is_location_suggestion_request(user_input: str) -> bool:
+     return any(hint in text for hint in hints)
+ 
+ 
+-def _location_suggestion_response(language: str) -> str:
++def _get_suggested_locations(state_manager: Optional[Any]) -> list[str]:
++    if not state_manager or not hasattr(state_manager, "schema"):
++        return ["Wakad", "Baner", "Hinjewadi", "Kharadi"]
++    
++    schema = state_manager.schema
++    if not schema:
++        return ["Wakad", "Baner", "Hinjewadi", "Kharadi"]
++
++    by_city = schema.get("project_quick_reference", {}).get("by_city")
++    if by_city and isinstance(by_city, dict):
++        return list(by_city.keys())
++        
++    projects = schema.get("all_projects", [])
++    if projects and isinstance(projects, list):
++        cities = set()
++        for p in projects:
++            city = p.get("location", {}).get("city")
++            if city:
++                cities.add(city)
++        if cities:
++            return sorted(list(cities))
++            
++    return ["Wakad", "Baner", "Hinjewadi", "Kharadi"]
++
++
++def _location_suggestion_response(language: str, state_manager: Optional[Any] = None) -> str:
++    locs = _get_suggested_locations(state_manager)
++    locs_str = ", ".join(locs[:-1]) + f", or {locs[-1]}" if len(locs) > 1 else locs[0]
++    
+     if language in ("hi", "hinglish"):
+-        return "Aap Wakad, Baner, Hinjewadi, ya Kharadi consider kar sakte ho. Inmein se kaunsa area better lagega?"
++        if "Wakad" in locs:
++            return f"Aap {', '.join(locs[:-1])} ya {locs[-1]} consider kar sakte ho. Inmein se kaunsa area better lagega?"
++        else:
++            return f"Aap {', '.join(locs[:-1])} ya {locs[-1]} dekh sakte hain. Aapko kaunsa city prefer hoga?"
+     if language == "mr":
+-        return "Wakad, Baner, Hinjewadi, ani Kharadi changle options aahet. Tyapeki konta area jasta suit hoil?"
+-    return "You can consider Wakad, Baner, Hinjewadi, or Kharadi. Which area sounds closest?"
++        if "Wakad" in locs:
++            return f"{', '.join(locs[:-1])} ani {locs[-1]} changle options aahet. Tyapeki konta area jasta suit hoil?"
++        else:
++            return f"{', '.join(locs[:-1])} ani {locs[-1]} options aahet. Tyapeki konta city prefer ahe?"
++    
++    if "Wakad" in locs:
++        return f"You can consider {locs_str}. Which area sounds closest?"
++    else:
++        return f"You can consider {locs_str}. Which city are you looking at?"
+ 
+ 
+ def _get_anti_repeat_nudge(node: dict[str, Any], language: str, context: Optional[dict] = None) -> str:
+diff --git a/llm/state_manager.py b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/llm/state_manager.py
+index 55b9284..db51145 100644
+--- a/llm/state_manager.py
++++ b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/llm/state_manager.py	
+@@ -62,6 +62,22 @@ LOCATION_NORMALIZATION = {
+     "kharadi": "Kharadi",
+     "karadi": "Kharadi",
+     "kharad": "Kharadi",
++    # Gurgaon variants
++    "gurugram": "Gurgaon",
++    "gurgaon": "Gurgaon",
++    # Jaipur variants
++    "jaipur": "Jaipur",
++    "uj-ae pur": "Jaipur",
++    "ujae pur": "Jaipur",
++    "ujaepur": "Jaipur",
++    "udaypur": "Jaipur",
++    "udaipur": "Jaipur",
++    "ujae poor": "Jaipur",
++    # Zirakpur variants
++    "zirakpur": "Zirakpur",
++    # Mathura variants
++    "mathura": "Mathura",
++    "vrindavan": "Mathura",
+ }
+ HINDI_LOCATION_TRANSLITERATION = {
+     "वाकड़": "Wakad",
+@@ -76,8 +92,27 @@ HINDI_LOCATION_TRANSLITERATION = {
+     "खराडी": "Kharadi",
+     "खरादी": "Kharadi",
+     "खारडी": "Kharadi",
++    # Gurgaon
++    "गुड़गांव": "Gurgaon",
++    "गुड़गांव": "Gurgaon",
++    "गुरुग्राम": "Gurgaon",
++    "गुड़गाँव": "Gurgaon",
++    # Jaipur
++    "जयपुर": "Jaipur",
++    "जयपूर": "Jaipur",
++    "उजए पूर": "Jaipur",
++    "उजएपुर": "Jaipur",
++    "उदयपुर": "Jaipur",
++    # Zirakpur
++    "जीरकपुर": "Zirakpur",
++    "झिरकपुर": "Zirakpur",
++    # Mathura
++    "मथुरा": "Mathura",
++    # Vrindavan
++    "वृंदावन": "Mathura",
++    "वृन्दावन": "Mathura",
+ }
+-VISIT_SCHEDULING_NODES = {"node-1736323961832", "node-1735265015507"}
++VISIT_SCHEDULING_NODES = {"node-1736323961832", "node-1735265015507", "node-visit"}
+ CALLBACK_SCHEDULING_NODE_ID = "node-1736492391269"
+ 
+ # ── Context-aware deny routing ────────────────────────────────────────────────
+@@ -86,10 +121,10 @@ POLITE_END_NODE_ID = "node-1735969972303"       # End Conversation
+ RESCHEDULE_VISIT_NODE_ID = "node_fallback_reschedule"
+ 
+ # Node sets where each deny sub-type applies
+-DENY_IDENTITY_NODES = {"node-1767592854176"}                        # Smart Greeting
+-DENY_TIME_NODES = {"node-1735264873079", "node-1735970090937"}      # Availability Check, Re-engage
+-DENY_INTEREST_NODES = {"node-1735264921453"}                        # Ask Intent
+-DENY_VISIT_NODES = {"node-1736323961832", "node-1735265015507"}     # Share Property, Site Visit
++DENY_IDENTITY_NODES = {"node-1767592854176", "node-greeting"}                        # Smart Greeting
++DENY_TIME_NODES = {"node-1735264873079", "node-1735970090937", "node-availability"}      # Availability Check, Re-engage
++DENY_INTEREST_NODES = {"node-1735264921453", "node-explain"}                        # Ask Intent
++DENY_VISIT_NODES = {"node-1736323961832", "node-1735265015507", "node-visit"}     # Share Property, Site Visit
+ 
+ ALL_DENY_INTENTS = {"deny", "deny_identity", "deny_interest", "deny_time", "deny_visit_time"}
+ # Edges with these condition keywords auto-advance without user input
+@@ -98,20 +133,32 @@ SKIP_EDGE_MARKERS = {"skip", "skip response"}
+ # ── Node Classification Map (Fix #6: Avoid fragile string matching) ──────────
+ NODE_GOALS = {
+     "node-1767592854176": "greet_and_confirm_identity",
++    "node-greeting": "greet_and_confirm_identity",
+     "node-1735264873079": "ask_availability",
+     "node-1735970090937": "ask_availability",
++    "node-availability": "ask_availability",
+     "node-1735264921453": "ask_intent",
++    "node-explain": "ask_intent",
+     "fallback_intent": "ask_intent",
++    "fallback-intent": "ask_intent",
+     "node-1735267546732": "ask_location", # Initial combined node
++    "node-ask-city": "ask_location",
+     "fallback_location": "ask_location",
++    "fallback-city": "ask_location",
+     "fallback_budget": "ask_budget",
++    "fallback-budget": "ask_budget",
+     "node-1736323961832": "share_property",
+     "node-1735265015507": "ask_visit_time",
++    "node-visit": "ask_visit_time",
+     "fallback_visit_datetime": "ask_visit_time",
++    "fallback-visit": "ask_visit_time",
+     "node-1736492391269": "ask_callback_time",
++    "node-callback": "ask_callback_time",
+     "fallback_callback_time": "ask_callback_time",
+     "node-1735265209472": "confirm_and_close",
+     "node-1736567518748": "confirm_and_close",
++    "node-confirm-callback": "confirm_and_close",
++    "node-confirm-visit": "confirm_and_close",
+ }
+ 
+ # Nodes that should auto-advance through skip edges after delivering response
+@@ -721,8 +768,12 @@ class StateManager:
+ 
+     def load_schema(self) -> None:
+         try:
+-            with open(self.json_path, "r", encoding="utf-8") as handle:
+-                self.schema = json.load(handle)
++            if os.path.isdir(self.json_path):
++                from flows.loader import load_agent_directory
++                self.schema = load_agent_directory(self.json_path)
++            else:
++                with open(self.json_path, "r", encoding="utf-8") as handle:
++                    self.schema = json.load(handle)
+         except Exception as exc:
+             logger.error("Failed to load StateManager schema from %s: %s", self.json_path, exc)
+             return
+@@ -1108,11 +1159,11 @@ class StateManager:
+         user_question = _detect_user_question(user_text)
+         if user_question:
+             if (
+-                current_node.get("id") == "node-1735264873079"
++                current_node.get("id") in {"node-1735264873079", "node-availability"}
+                 and user_question in {"purpose", "identity", "confusion"}
+                 and _has_availability_confirmation(user_text)
+             ):
+-                next_node = self.nodes.get("node-1735264921453")
++                next_node = self.nodes.get("node-1735264921453") or self.nodes.get("node-explain")
+                 if next_node:
+                     _log("STATE", f"{current_node['id']} -> {next_node['id']} (availability confirmed with question)")
+                     self.current_node_id = next_node["id"]
+@@ -1215,7 +1266,7 @@ class StateManager:
+         # to auto-skip if a required slot was just provided.
+         if self._should_skip_node(current_node):
+             _log("SKIP", f"Node {current_node.get('id')} skipping because slots are now fulfilled")
+-            skip_dest = self._first_destination(current_node)
++            skip_dest = self._resolve_skip_destination(current_node)
+             if skip_dest:
+                 next_node = self.nodes.get(skip_dest) or current_node
+                 current_node = next_node
+@@ -1246,7 +1297,7 @@ class StateManager:
+                 }
+                 
+                 if intent not in override_intents:
+-                    forward_id = self._first_destination(current_node)
++                    forward_id = self._resolve_skip_destination(current_node)
+                     if forward_id:
+                         next_node = self.nodes.get(forward_id)
+                         if next_node:
+@@ -1268,7 +1319,7 @@ class StateManager:
+ 
+         # Callback time recovery from fallback
+         if current_node.get("id") == "fallback_callback_time" and intent == "provide_timeline":
+-            resume_node_id = self._first_destination(current_node)
++            resume_node_id = self._resolve_skip_destination(current_node)
+             resume_node = self.nodes.get(resume_node_id) if resume_node_id else None
+             if resume_node:
+                 _log("STATE", f"{current_node['id']} -> {resume_node['id']} (resume callback)")
+@@ -1324,7 +1375,7 @@ class StateManager:
+                         self._same_node_count = 0
+                     else:
+                         _log("LOOP PREVENTION", f"Forcing transition from {current_node['id']}")
+-                        forward_id = self._first_destination(current_node)
++                        forward_id = self._resolve_skip_destination(current_node)
+                         if forward_id:
+                             next_node = self.nodes.get(forward_id) or next_node
+                         else:
+@@ -1418,8 +1469,8 @@ class StateManager:
+         # ── Global Interrupts / Shortcuts ───────────────────────────────────────────
+         # 1. Callback scheduling shortcut on busy
+         if intent in {"deny_time", "busy", "call_later", "not_now"}:
+-            if node_id != "node-1736492391269":
+-                target = self.nodes.get("node-1736492391269")  # Callback Scheduling
++            if node_id not in {"node-1736492391269", "node-callback"}:
++                target = self.nodes.get("node-1736492391269") or self.nodes.get("node-callback")  # Callback Scheduling
+                 if target:
+                     _log("STATE", f"{node_id} -> {target['id']} (forced callback scheduling)")
+                     return target
+@@ -1437,8 +1488,8 @@ class StateManager:
+ 
+         # 3. Wrong person / wrong number globally
+         if intent in {"deny_identity", "wrong_person", "wrong_number"}:
+-            if node_id != "node-1736492520068":
+-                target = self.nodes.get("node-1736492520068")  # Immediate End Call
++            if node_id not in {"node-1736492520068", "node-wrong-person"}:
++                target = self.nodes.get("node-1736492520068") or self.nodes.get("node-wrong-person")  # Immediate End Call / Wrong Person
+                 if not target:
+                     # Fallback to any end node in dynamic flow
+                     target = next((n for n in self.nodes.values() if n.get("type") == "end"), None)
+@@ -1447,14 +1498,14 @@ class StateManager:
+                     return target
+ 
+         # 2. Resuming flow from callback
+-        if node_id in {"node-1736492391269", "fallback_callback_time"}:
++        if node_id in {"node-1736492391269", "node-callback", "fallback_callback_time"}:
+             if intent in {"confirm_availability", "provide_intent", "confirm"}:
+-                target = self.nodes.get("node-1735264921453")  # Ask Intent
++                target = self.nodes.get("node-1735264921453") or self.nodes.get("node-explain")  # Ask Intent
+                 if target:
+                     _log("STATE", f"{node_id} -> {target['id']} (resumed flow from callback)")
+                     return target
+             if intent in {"deny", "deny_interest", "deny_time"}:
+-                target = self.nodes.get("node-1736492520068")  # Immediate End Call
++                target = self.nodes.get("node-1736492520068") or self.nodes.get("node-wrong-person")  # Immediate End Call / Wrong Person
+                 if not target:
+                     target = next((n for n in self.nodes.values() if n.get("type") == "end"), None)
+                 if target:
+@@ -1465,14 +1516,14 @@ class StateManager:
+         # When user gives a valid intent (buy/invest/rent/sell) on either the Ask
+         # Intent node OR its fallback, skip intermediate steps and jump directly
+         # to the correct destination.
+-        if node_id in {"node-1735264921453", "fallback_intent"}:
++        if node_id in {"node-1735264921453", "node-explain", "fallback_intent", "fallback-intent"}:
+             if intent in {"provide_intent", "provide_property_type", "provide_location", "provide_budget"}:
+-                target = self.nodes.get("node-1735267546732")  # Ask Location & Budget
++                target = self.nodes.get("node-1735267546732") or self.nodes.get("node-ask-city")  # Ask Location & Budget / City
+                 if target:
+                     _log("STATE", f"{node_id} -> {target['id']} ({intent} shortcut)")
+                     return target
+             if intent == "seller_interest":
+-                target = self.nodes.get("node-1736510533232")  # Seller Flow Start
++                target = self.nodes.get("node-1736510533232") or self.nodes.get("node-seller-flow")  # Seller Flow Start
+                 if target:
+                     _log("STATE", f"{node_id} -> {target['id']} (seller shortcut)")
+                     return target
+@@ -1483,6 +1534,22 @@ class StateManager:
+             _log("STATE", f"No outgoing edges from {current_node['id']} - staying on current node")
+             return current_node
+ 
++        # Check if any edge condition matches the extracted entity/slot value
++        for slot in self._collect_slots(current_node):
++            val = self.conversation_data.get(slot)
++            if val:
++                val_list = [str(val).lower().strip()]
++                if isinstance(val, list):
++                    val_list = [str(v).lower().strip() for v in val]
++                for edge in edges:
++                    condition = (edge.get("condition") or "").lower().strip()
++                    if any(condition == v or v in condition for v in val_list):
++                        destination_id = edge.get("destination_node_id")
++                        destination = self.nodes.get(destination_id) if destination_id else None
++                        if destination:
++                            _log("STATE", f"{current_node['id']} -> {destination['id']} (slot value '{val}' matches edge condition '{condition}')")
++                            return destination
++
+         intents_to_match = [intent]
+         if raw_intent and raw_intent not in intents_to_match:
+             intents_to_match.append(raw_intent)
+@@ -1723,7 +1790,7 @@ class StateManager:
+         seen: set[str] = set()
+         while self._should_skip_node(current):
+             _log("SKIP", f"{current['id']} - {self._skip_reason(current)}")
+-            next_id = self._first_destination(current)
++            next_id = self._resolve_skip_destination(current)
+             if not next_id or next_id in seen:
+                 return current
+             seen.add(next_id)
+@@ -1766,7 +1833,7 @@ class StateManager:
+             if current["id"] in visited:
+                 break
+             visited.add(current["id"])
+-            forward_id = self._first_destination(current)
++            forward_id = self._resolve_skip_destination(current)
+             if not forward_id:
+                 break
+             forward_node = self.nodes.get(forward_id)
+@@ -1785,29 +1852,37 @@ class StateManager:
+         """
+         if not condition:
+             return False
+-        normalized = condition.strip().lower()
++        normalized = condition.strip().lower().replace("_", " ")
+         
+         # 2.1 Intent Alias Mapping (Expanded as per instruction)
+         intent_aliases = {
+             "confirm": {
+                 "confirm", "affirm", "yes", "acknowledge", "open_yes", "perm_yes",
+                 "conv_yes", "interested", "okay", "ok", "sure", "haan", "acha",
++                "conversation finished", "finished",
+             },
+             "deny": {"deny", "no", "reject", "decline", "conv_no", "not_interested"},
+             "deny_time": {"deny_time", "busy", "not_now", "call_later", "perm_busy", "later"},
+             "provide_intent": {"provide_intent", "intent_active", "intent_info", "ask_info"},
++            "provide_info": {
++                "provide_info", "provide info", "info", "particulars", "details",
++                "conversation finished", "finished",
++            },
+             # 2.2 Fallback Routing - retry is a synonym for unclear
+-            "unclear": {"unclear", "fallback", "retry", "hmm", "noise"},
++            "unclear": {
++                "unclear", "fallback", "retry", "hmm", "noise",
++                "conversation finished", "finished",
++            },
+             "unclear_intent": {"unclear_intent", "intent_fallback"},
+             "slots_collected": {"slots_collected", "qual_done", "completed", "details provided"},
+         }
+         
+         for intent in intents_to_match:
+-            key = intent.strip().lower()
++            key = intent.strip().lower().replace("_", " ")
+             if key and key in normalized:
+                 return True
+-            aliases = intent_aliases.get(key, set())
+-            if any(alias in normalized for alias in aliases):
++            aliases = intent_aliases.get(intent.strip().lower(), set())
++            if any(alias.replace("_", " ") in normalized for alias in aliases):
+                 return True
+         return False
+ 
+@@ -1823,6 +1898,12 @@ class StateManager:
+         return keys
+ 
+     def _merge_entities(self, entities: dict[str, Any], intent: str = "") -> None:
++        entities = dict(entities)
++        if "location" in entities and "preferred_city" in self.entity_keys:
++            entities["preferred_city"] = entities["location"]
++        if "preferred_city" in entities and "location" in self.entity_keys:
++            entities["location"] = entities["preferred_city"]
++
+         for key in self.entity_keys:
+             # Match keys case-insensitively or with space/underscore normalization
+             value = None
+@@ -1895,6 +1976,28 @@ class StateManager:
+         edge = next(iter(node.get("edges", [])), None)
+         return edge.get("destination_node_id", "") if edge else ""
+ 
++    def _resolve_skip_destination(self, node: dict[str, Any]) -> str:
++        edges = node.get("edges", [])
++        if not edges:
++            return ""
++            
++        # Try to match slot values against edge conditions
++        for slot in self._collect_slots(node):
++            val = self.conversation_data.get(slot)
++            if val:
++                val_list = [str(val).lower().strip()]
++                if isinstance(val, list):
++                    val_list = [str(v).lower().strip() for v in val]
++                for edge in edges:
++                    condition = (edge.get("condition") or "").lower().strip()
++                    if any(condition == v or v in condition for v in val_list):
++                        destination_id = edge.get("destination_node_id")
++                        if destination_id:
++                            return destination_id
++                            
++        # Fallback to first destination
++        return self._first_destination(node)
++
+     def _normalize_intent_for_context(
+         self,
+         current_node: dict[str, Any],
+@@ -1917,13 +2020,13 @@ class StateManager:
+         if asks_call_purpose:
+             return intent
+ 
+-        if node_id in {"node-1735267546732", "fallback_location", "fallback_budget"}:
++        if node_id in {"node-1735267546732", "node-ask-city", "fallback_location", "fallback-city", "fallback_budget", "fallback-budget"}:
+             if self._is_location_suggestion(clean_text, current_node):
+                 _log("INTENT NORMALIZED", "Location suggestion requested -> ask_location_suggestion")
+                 return "ask_location_suggestion"
+ 
+         # ── buyer_requirements_ready: auto-transition when both location+budget collected ──
+-        if node_id == "node-1735267546732":
++        if node_id in {"node-1735267546732", "node-ask-city"}:
+             loc_ready = self.conversation_data.get("location") or entities.get("location")
+             bud_ready = self.conversation_data.get("budget") or entities.get("budget")
+             
+@@ -1940,7 +2043,7 @@ class StateManager:
+         # ── Ask Intent node: map purchase/investment answers to provide_intent ──────
+         # The LLM sometimes returns confirm_identity/unclear for "for myself",
+         # "investment", "personal use" etc. We intercept here to keep the flow moving.
+-        if node_id in {"node-1735264921453", "fallback_intent"}:
++        if node_id in {"node-1735264921453", "node-explain", "fallback_intent", "fallback-intent"}:
+             _BUY_SIGNALS = (
+                 # Personal use
+                 "for myself", "myself", "personal use", "own use", "personal",
+@@ -2035,7 +2138,7 @@ class StateManager:
+ 
+         # Callback scheduling accepts broad natural time expressions and normalizes
+         # them into a specific callback time so we don't loop on fallback prompts.
+-        if node_id in {"node-1736492391269", "fallback_callback_time"}:
++        if node_id in {"node-1736492391269", "node-callback", "fallback_callback_time"}:
+             callback_time_keywords = [
+                 "morning", "afternoon", "evening", "night",
+                 "am", "pm", "after", "post", "around",
+@@ -2065,9 +2168,9 @@ class StateManager:
+             "dont mind", "no specific preference", "not particular",
+         }
+         if any(phrase in text for phrase in uncertain):
+-            if current_node["id"] == "node-1735264921453":
++            if current_node["id"] in {"node-1735264921453", "node-explain"}:
+                 return "unclear_intent"
+-            if current_node["id"] == "node-1735267546732":
++            if current_node["id"] in {"node-1735267546732", "node-ask-city"}:
+                 if self.conversation_data.get("location") or entities.get("location"):
+                     return "unclear_budget"
+                 if self.conversation_data.get("budget") or entities.get("budget"):
+@@ -2077,9 +2180,9 @@ class StateManager:
+                 return "unclear_location"
+             if current_node["id"] == "node-1767420514711":
+                 return "unclear_property_type"
+-            if current_node["id"] == "node-1735265015507":
++            if current_node["id"] in {"node-1735265015507", "node-visit"}:
+                 return "unclear_visit_datetime"
+-            if current_node["id"] == "node-1736492391269":
++            if current_node["id"] in {"node-1736492391269", "node-callback"}:
+                 return "unclear_callback_time"
+ 
+         # ── Catch-all: signals ───────────────────────────────────────────
+@@ -2273,6 +2376,8 @@ class StateManager:
+ 
+     def _clean_entity_value(self, key: str, value: Any) -> Optional[str]:
+         text = re.sub(r"\s+", " ", str(value).strip())
++        # Strip common punctuation (like Hindi full stop '।', commas, periods)
++        text = re.sub(r"[.?।!,;]", "", text).strip()
+         if not text:
+             return None
+ 

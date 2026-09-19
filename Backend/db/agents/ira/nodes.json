@@ -1,0 +1,78 @@
+[
+  {
+    "id": "root_greeting",
+    "name": "Initial Greeting",
+    "type": "conversation",
+    "instruction": {
+      "type": "prompt",
+      "text": "Greet the user warmly as Ira and confirm identity using the lead name."
+    },
+    "response": "Hello, this is Ira from the Education Counselling team. Am I speaking with {{name}}?",
+    "intent_triggers": [
+      "call_connected"
+    ]
+  },
+  {
+    "id": "ask_course",
+    "name": "Ask Course Interest",
+    "type": "conversation",
+    "instruction": {
+      "type": "prompt",
+      "text": "Ask what course, program, exam, or career path they are interested in."
+    },
+    "response": "Great! I would love to help you find the right program. What course, exam, or career path are you currently interested in?",
+    "collects": [
+      "course_interest"
+    ]
+  },
+  {
+    "id": "ask_education",
+    "name": "Ask Education Level",
+    "type": "conversation",
+    "instruction": {
+      "type": "prompt",
+      "text": "Ask what their current education level or class is."
+    },
+    "response": "Got it. And what is your current education level or highest qualification?",
+    "collects": [
+      "education_level"
+    ]
+  },
+  {
+    "id": "ask_preferences",
+    "name": "Ask Location Preference",
+    "type": "conversation",
+    "instruction": {
+      "type": "prompt",
+      "text": "Ask if they prefer online classes or offline, and their preferred city."
+    },
+    "response": "Understood. Do you prefer online classes, or are you looking for offline institutes in a preferred city?",
+    "collects": [
+      "preferred_mode",
+      "preferred_city"
+    ]
+  },
+  {
+    "id": "ask_callback",
+    "name": "Ask Callback Confirmation",
+    "type": "conversation",
+    "instruction": {
+      "type": "prompt",
+      "text": "Ask if they want a detailed callback from a senior counselor."
+    },
+    "response": "Perfect. Would you like a senior counselor to call you back for a detailed guidance session?",
+    "collects": [
+      "callback"
+    ]
+  },
+  {
+    "id": "end_node",
+    "name": "Conclusion",
+    "type": "end",
+    "instruction": {
+      "type": "prompt",
+      "text": "Thank the user and close the counseling qualification call."
+    },
+    "response": "Thank you so much for sharing these details. I will have our counselor reach out to you shortly. Have a great day!"
+  }
+]

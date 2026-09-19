@@ -1,0 +1,244 @@
+{
+  "agent_name": "Indic-Test",
+  "voice_id": "11labs-06nek6zjTCD1vCbtc8bc",
+  "conversation_flow_id": "flowv2_7d597c9fe53d",
+  "global_prompt": "You are an education counselling voice agent.\n\nPrimary goal:\nUnderstand the student's course interest and connect them with the right counsellor.\n\nConversation style:\nBe encouraging, patient, and clear. Ask one question at a time. Support parents and students without sounding pushy.\n\nDiscovery questions:\n1. Ask which course, program, exam, or career path they are interested in.\n2. Ask current education level.\n3. Ask preferred city, online/offline preference, and timeline.\n4. Ask budget or fee range only if the conversation naturally allows it.\n5. Ask whether a counsellor should call back.\n\nRules:\nDo not guarantee admission, scholarship, visa approval, placement, or exam results.\n\nFinal outcome:\nSummarize the student requirement and confirm the counselling follow-up.",
+  "conversationFlow": {
+    "conversation_flow_id": "flowv2_7d597c9fe53d",
+    "version": 2,
+    "schema_version": "2.0",
+    "global_prompt": "You are an education counselling voice agent.\n\nPrimary goal:\nUnderstand the student's course interest and connect them with the right counsellor.\n\nConversation style:\nBe encouraging, patient, and clear. Ask one question at a time. Support parents and students without sounding pushy.\n\nDiscovery questions:\n1. Ask which course, program, exam, or career path they are interested in.\n2. Ask current education level.\n3. Ask preferred city, online/offline preference, and timeline.\n4. Ask budget or fee range only if the conversation naturally allows it.\n5. Ask whether a counsellor should call back.\n\nRules:\nDo not guarantee admission, scholarship, visa approval, placement, or exam results.\n\nFinal outcome:\nSummarize the student requirement and confirm the counselling follow-up.",
+    "start_node_id": "start",
+    "nodes": [
+      {
+        "id": "root_greeting",
+        "name": "Initial Greeting",
+        "type": "conversation",
+        "intent_triggers": [
+          "call_connected"
+        ],
+        "edges": [
+          {
+            "id": "to_discovery",
+            "condition": "user responds",
+            "destination_node_id": "discovery"
+          }
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Greet the user warmly as Indic-Test and confirm identity using the lead name."
+        },
+        "response": "Hello, this is Indic-Test from the Education counselling team. Am I speaking with {{name}}?"
+      },
+      {
+        "id": "start",
+        "name": "Greeting",
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Follow the published Flow V2 node 'Greeting' and keep the reply concise."
+        },
+        "response": "Hello, this is Indic-Test. Am I speaking with {{name}}?",
+        "edges": [
+          {
+            "id": "edge_start_1_discovery",
+            "condition": "Confirm",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Confirm"
+            },
+            "destination_node_id": "discovery"
+          },
+          {
+            "id": "edge_start_2_end",
+            "condition": "Deny",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Deny"
+            },
+            "destination_node_id": "end"
+          },
+          {
+            "id": "edge_start_3_fallback",
+            "condition": "Unclear",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Unclear"
+            },
+            "destination_node_id": "fallback"
+          }
+        ],
+        "start_speaker": "agent",
+        "intent_triggers": [
+          "call_connected"
+        ]
+      },
+      {
+        "id": "discovery",
+        "name": "Discovery",
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Follow the published Flow V2 node 'Discovery' and keep the reply concise."
+        },
+        "response": "Could you share a little about what you are looking for?",
+        "edges": [
+          {
+            "id": "edge_discovery_1_confirm_followup",
+            "condition": "Provide Info",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Provide Info"
+            },
+            "destination_node_id": "confirm_followup"
+          },
+          {
+            "id": "edge_discovery_2_confirm_followup",
+            "condition": "Confirm",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Confirm"
+            },
+            "destination_node_id": "confirm_followup"
+          },
+          {
+            "id": "edge_discovery_3_fallback",
+            "condition": "Unclear",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Unclear"
+            },
+            "destination_node_id": "fallback"
+          }
+        ],
+        "intent_triggers": [
+          "confirm",
+          "provide_info"
+        ],
+        "collects": [
+          "interested",
+          "course_interest",
+          "education_level",
+          "city",
+          "budget",
+          "callback"
+        ]
+      },
+      {
+        "id": "fallback",
+        "name": "Clarify",
+        "type": "fallback",
+        "instruction": {
+          "type": "prompt",
+          "text": "Follow the published Flow V2 node 'Clarify' and keep the reply concise."
+        },
+        "response": "Sorry, I did not catch that clearly. Could you repeat it once?",
+        "edges": [
+          {
+            "id": "edge_fallback_1_discovery",
+            "condition": "Provide Info",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Provide Info"
+            },
+            "destination_node_id": "discovery"
+          },
+          {
+            "id": "edge_fallback_2_discovery",
+            "condition": "Confirm",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Confirm"
+            },
+            "destination_node_id": "discovery"
+          },
+          {
+            "id": "edge_fallback_3_end",
+            "condition": "Deny",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Deny"
+            },
+            "destination_node_id": "end"
+          }
+        ],
+        "intent_triggers": [
+          "unclear"
+        ],
+        "fallback": {
+          "max_attempts": 2,
+          "escalation_target": "end"
+        }
+      },
+      {
+        "id": "confirm_followup",
+        "name": "Confirm Follow-up",
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Follow the published Flow V2 node 'Confirm Follow-up' and keep the reply concise."
+        },
+        "response": "Thanks. I will have the team follow up with the right details.",
+        "edges": [
+          {
+            "id": "edge_confirm_followup_1_end",
+            "condition": "Confirm",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Confirm"
+            },
+            "destination_node_id": "end"
+          },
+          {
+            "id": "edge_confirm_followup_2_end",
+            "condition": "Deny",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Deny"
+            },
+            "destination_node_id": "end"
+          },
+          {
+            "id": "edge_confirm_followup_3_fallback",
+            "condition": "Unclear",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Unclear"
+            },
+            "destination_node_id": "fallback"
+          }
+        ],
+        "intent_triggers": [
+          "confirm",
+          "provide_info"
+        ]
+      },
+      {
+        "id": "end",
+        "name": "End",
+        "type": "end",
+        "instruction": {
+          "type": "prompt",
+          "text": "Follow the published Flow V2 node 'End' and keep the reply concise."
+        },
+        "response": "Thank you. Have a good day.",
+        "edges": [],
+        "intent_triggers": [
+          "confirm",
+          "deny"
+        ]
+      }
+    ]
+  },
+  "provider_config": {
+    "stt_provider": "groq",
+    "tts_provider": "edge",
+    "cartesia_voice_id": "95d51f79-c397-46f9-b49a-23763d3eaa2d"
+  },
+  "agent_metadata": {
+    "agent_type": "education",
+    "assigned_email": "roy2272234@gmail.com",
+    "client_id": "user-0f97e3620b3d"
+  },
+  "tts_provider": "edge"
+}

@@ -1,0 +1,190 @@
+[
+    {
+        "from_node_id": "hr_greeting",
+        "transitions": [
+            { "id": "e_greet_avail",    "intent": "user confirms identity",                 "target": "hr_availability",       "condition": "user confirms identity" },
+            { "id": "e_greet_wrong",    "intent": "wrong person or wrong number",           "target": "wrong_person_end",      "condition": "wrong person or wrong number" },
+            { "id": "e_greet_busy",     "intent": "user is busy",                           "target": "callback_scheduling",   "condition": "user is busy" },
+            { "id": "e_greet_what",     "intent": "user asks who is this or what is this about", "target": "hr_route_intent",  "condition": "user asks who is this or what is this about" }
+        ]
+    },
+    {
+        "from_node_id": "hr_availability",
+        "transitions": [
+            { "id": "e_avail_route",    "intent": "user is free",                           "target": "hr_route_intent",       "condition": "user is free" },
+            { "id": "e_avail_busy",     "intent": "user is busy",                           "target": "callback_scheduling",   "condition": "user is busy" },
+            { "id": "e_avail_deny",     "intent": "user is not interested",                 "target": "objection_not_interested", "condition": "user is not interested" }
+        ]
+    },
+    {
+        "from_node_id": "hr_route_intent",
+        "transitions": [
+            { "id": "e_route_job",      "intent": "job application or interview",           "target": "screening_experience",  "condition": "job application or interview" },
+            { "id": "e_route_hr",       "intent": "hr policy question",                     "target": "policy_query",          "condition": "hr policy question" },
+            { "id": "e_route_notint",   "intent": "not interested",                         "target": "objection_not_interested", "condition": "not interested" },
+            { "id": "e_route_sensitive","intent": "grievance complaint or resignation",     "target": "policy_escalate",       "condition": "grievance complaint or resignation" },
+            { "id": "e_route_fallback", "intent": "unclear intent",                         "target": "fallback_intent",       "condition": "unclear intent" }
+        ]
+    },
+    {
+        "from_node_id": "screening_experience",
+        "transitions": [
+            { "id": "e_exp_ctc",        "intent": "experience and role provided",           "target": "screening_ctc",         "condition": "experience and role provided" },
+            { "id": "e_exp_details",    "intent": "user asks about the role",               "target": "role_details",          "condition": "user asks about the role" },
+            { "id": "e_exp_notint",     "intent": "not interested",                         "target": "objection_not_interested", "condition": "not interested" },
+            { "id": "e_exp_busy",       "intent": "user is busy",                           "target": "callback_scheduling",   "condition": "user is busy" },
+            { "id": "e_exp_fallback",   "intent": "unclear experience",                     "target": "fallback_experience",   "condition": "unclear experience" }
+        ]
+    },
+    {
+        "from_node_id": "screening_ctc",
+        "transitions": [
+            { "id": "e_ctc_notice",     "intent": "ctc provided",                           "target": "screening_notice",      "condition": "ctc provided" },
+            { "id": "e_ctc_mismatch",   "intent": "budget or package too low",              "target": "objection_ctc_low",     "condition": "budget or package too low" },
+            { "id": "e_ctc_details",    "intent": "user asks about the role",               "target": "role_details",          "condition": "user asks about the role" },
+            { "id": "e_ctc_fallback",   "intent": "unclear or uncertain ctc",               "target": "fallback_ctc",          "condition": "unclear or uncertain ctc" }
+        ]
+    },
+    {
+        "from_node_id": "screening_notice",
+        "transitions": [
+            { "id": "e_notice_role",    "intent": "notice period provided",                 "target": "role_details",          "condition": "notice period provided" },
+            { "id": "e_notice_fallback","intent": "unclear notice period",                  "target": "fallback_notice",       "condition": "unclear notice period" }
+        ]
+    },
+    {
+        "from_node_id": "role_details",
+        "transitions": [
+            { "id": "e_role_slot",      "intent": "user agrees to interview",               "target": "interview_slot",        "condition": "user agrees to interview" },
+            { "id": "e_role_ctc",       "intent": "budget or package too low",              "target": "objection_ctc_low",     "condition": "budget or package too low" },
+            { "id": "e_role_notint",    "intent": "not interested",                         "target": "objection_not_interested", "condition": "not interested" },
+            { "id": "e_role_busy",      "intent": "user is busy",                           "target": "callback_scheduling",   "condition": "user is busy" }
+        ]
+    },
+    {
+        "from_node_id": "interview_slot",
+        "transitions": [
+            { "id": "e_slot_confirm",   "intent": "date and time provided",                 "target": "confirm_interview",     "condition": "date and time provided" },
+            { "id": "e_slot_reschedule","intent": "user wants a different slot",            "target": "fallback_interview_slot","condition": "user wants a different slot" },
+            { "id": "e_slot_busy",      "intent": "user is busy",                           "target": "callback_scheduling",   "condition": "user is busy" },
+            { "id": "e_slot_fallback",  "intent": "unclear date or time",                   "target": "fallback_interview_slot","condition": "unclear date or time" }
+        ]
+    },
+    {
+        "from_node_id": "confirm_interview",
+        "transitions": [
+            { "id": "e_confirm_end",    "intent": "user acknowledges",                      "target": "end_node",              "condition": "user acknowledges" },
+            { "id": "e_confirm_change", "intent": "user wants a different slot",            "target": "interview_slot",        "condition": "user wants a different slot" },
+            { "id": "e_confirm_query",  "intent": "user has another question",              "target": "policy_query",          "condition": "user has another question" }
+        ]
+    },
+    {
+        "from_node_id": "policy_query",
+        "transitions": [
+            { "id": "e_pq_answer",      "intent": "policy topic provided",                  "target": "policy_answer",         "condition": "policy topic provided" },
+            { "id": "e_pq_escalate",    "intent": "grievance complaint or sensitive topic", "target": "policy_escalate",       "condition": "grievance complaint or sensitive topic" },
+            { "id": "e_pq_fallback",    "intent": "unclear",                                "target": "node_fallback",         "condition": "unclear" }
+        ]
+    },
+    {
+        "from_node_id": "policy_answer",
+        "transitions": [
+            { "id": "e_pa_more",        "intent": "user has another question",              "target": "policy_query",          "condition": "user has another question" },
+            { "id": "e_pa_escalate",    "intent": "answer not known or sensitive topic",    "target": "policy_escalate",       "condition": "answer not known or sensitive topic" },
+            { "id": "e_pa_end",         "intent": "user is done",                           "target": "end_node",              "condition": "user is done" }
+        ]
+    },
+    {
+        "from_node_id": "policy_escalate",
+        "transitions": [
+            { "id": "e_pe_confirm",     "intent": "callback time provided",                 "target": "confirm_callback",      "condition": "callback time provided" },
+            { "id": "e_pe_fallback",    "intent": "unclear callback time",                  "target": "fallback_callback_time","condition": "unclear callback time" }
+        ]
+    },
+    {
+        "from_node_id": "objection_not_interested",
+        "transitions": [
+            { "id": "e_oni_end",        "intent": "user agrees to whatsapp or declines politely", "target": "polite_goodbye_end", "condition": "user agrees to whatsapp or declines politely" },
+            { "id": "e_oni_back",       "intent": "user changes mind",                      "target": "screening_experience",  "condition": "user changes mind" }
+        ]
+    },
+    {
+        "from_node_id": "objection_ctc_low",
+        "transitions": [
+            { "id": "e_ocl_slot",       "intent": "user agrees to interview",               "target": "interview_slot",        "condition": "user agrees to interview" },
+            { "id": "e_ocl_end",        "intent": "user declines",                          "target": "polite_goodbye_end",    "condition": "user declines" }
+        ]
+    },
+    {
+        "from_node_id": "callback_scheduling",
+        "transitions": [
+            { "id": "e_cb_confirm",     "intent": "callback time provided",                 "target": "confirm_callback",      "condition": "callback time provided" },
+            { "id": "e_cb_fallback",    "intent": "unclear callback time",                  "target": "fallback_callback_time","condition": "unclear callback time" },
+            { "id": "e_cb_decline",     "intent": "user declines callback",                 "target": "polite_goodbye_end",    "condition": "user declines callback" }
+        ]
+    },
+    {
+        "from_node_id": "confirm_callback",
+        "transitions": [
+            { "id": "e_ccb_end",        "intent": "user acknowledges",                      "target": "end_node",              "condition": "user acknowledges" }
+        ]
+    },
+    {
+        "from_node_id": "reengage_user",
+        "transitions": [
+            { "id": "e_re_route",       "intent": "user responds",                          "target": "hr_route_intent",       "condition": "user responds" },
+            { "id": "e_re_end",         "intent": "still silent",                           "target": "end_node",              "condition": "still silent" }
+        ]
+    },
+    {
+        "from_node_id": "fallback_intent",
+        "transitions": [
+            { "id": "e_fi_job",         "intent": "job application or interview",           "target": "screening_experience",  "condition": "job application or interview" },
+            { "id": "e_fi_hr",          "intent": "hr policy question",                     "target": "policy_query",          "condition": "hr policy question" },
+            { "id": "e_fi_end",         "intent": "still unclear",                          "target": "polite_goodbye_end",    "condition": "still unclear" }
+        ]
+    },
+    {
+        "from_node_id": "fallback_experience",
+        "transitions": [
+            { "id": "e_fe_ctc",         "intent": "experience provided",                    "target": "screening_ctc",         "condition": "experience provided" },
+            { "id": "e_fe_back",        "intent": "still unclear",                          "target": "screening_experience",  "condition": "still unclear" }
+        ]
+    },
+    {
+        "from_node_id": "fallback_ctc",
+        "transitions": [
+            { "id": "e_fc_notice",      "intent": "ctc range provided",                     "target": "screening_notice",      "condition": "ctc range provided" },
+            { "id": "e_fc_back",        "intent": "still unclear",                          "target": "screening_ctc",         "condition": "still unclear" }
+        ]
+    },
+    {
+        "from_node_id": "fallback_notice",
+        "transitions": [
+            { "id": "e_fn_role",        "intent": "notice period provided",                 "target": "role_details",          "condition": "notice period provided" },
+            { "id": "e_fn_back",        "intent": "still unclear",                          "target": "screening_notice",      "condition": "still unclear" }
+        ]
+    },
+    {
+        "from_node_id": "fallback_interview_slot",
+        "transitions": [
+            { "id": "e_fis_confirm",    "intent": "date and time provided",                 "target": "confirm_interview",     "condition": "date and time provided" },
+            { "id": "e_fis_back",       "intent": "still unclear",                          "target": "interview_slot",        "condition": "still unclear" },
+            { "id": "e_fis_callback",   "intent": "user wants a callback instead",          "target": "callback_scheduling",   "condition": "user wants a callback instead" }
+        ]
+    },
+    {
+        "from_node_id": "fallback_callback_time",
+        "transitions": [
+            { "id": "e_fct_confirm",    "intent": "callback time provided",                 "target": "confirm_callback",      "condition": "callback time provided" },
+            { "id": "e_fct_end",        "intent": "still unclear",                          "target": "polite_goodbye_end",    "condition": "still unclear" }
+        ]
+    },
+    {
+        "from_node_id": "node_fallback",
+        "transitions": [
+            { "id": "e_nf_route",       "intent": "user responds",                          "target": "hr_route_intent",       "condition": "user responds" },
+            { "id": "e_nf_reengage",    "intent": "still unclear",                          "target": "reengage_user",         "condition": "still unclear" }
+        ]
+    }
+]

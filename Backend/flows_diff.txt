@@ -1,0 +1,615 @@
+diff --git a/flows/__pycache__/__init__.cpython-312.pyc b/flows/__pycache__/__init__.cpython-312.pyc
+deleted file mode 100644
+index aa52035..0000000
+Binary files a/flows/__pycache__/__init__.cpython-312.pyc and /dev/null differ
+diff --git a/flows/__pycache__/__init__.cpython-314.pyc b/flows/__pycache__/__init__.cpython-314.pyc
+deleted file mode 100644
+index 600d77c..0000000
+Binary files a/flows/__pycache__/__init__.cpython-314.pyc and /dev/null differ
+diff --git a/flows/__pycache__/runtime.cpython-312.pyc b/flows/__pycache__/runtime.cpython-312.pyc
+deleted file mode 100644
+index 57d8c0b..0000000
+Binary files a/flows/__pycache__/runtime.cpython-312.pyc and /dev/null differ
+diff --git a/flows/__pycache__/runtime.cpython-314.pyc b/flows/__pycache__/runtime.cpython-314.pyc
+deleted file mode 100644
+index 5875893..0000000
+Binary files a/flows/__pycache__/runtime.cpython-314.pyc and /dev/null differ
+diff --git a/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/flows/loader.py b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/flows/loader.py
+new file mode 100644
+index 0000000..9dbe075
+--- /dev/null
++++ b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/flows/loader.py	
+@@ -0,0 +1,240 @@
++"""Loader and validator for split JSON-driven voice agent configs."""
++
++from __future__ import annotations
++
++import json
++import os
++import logging
++from typing import Any, Dict, List
++
++logger = logging.getLogger(__name__)
++
++
++class AgentConfigValidationError(ValueError):
++    """Raised when there is a validation issue with the agent configuration files."""
++    pass
++
++
++def validate_agent_directory(dir_path: str) -> None:
++    """Validate that the agent configuration directory contains all required files and is well-formed.
++    
++    Raises AgentConfigValidationError if validation fails.
++    """
++    if not os.path.isdir(dir_path):
++        raise AgentConfigValidationError(f"Path is not a directory: {dir_path}")
++
++    required_files = ["conversation.json", "nodes.json", "intents.json", "transitions.json"]
++    for file_name in required_files:
++        file_path = os.path.join(dir_path, file_name)
++        if not os.path.isfile(file_path):
++            raise AgentConfigValidationError(f"Missing required configuration file: {file_path}")
++
++    # Load and parse conversation.json
++    try:
++        with open(os.path.join(dir_path, "conversation.json"), "r", encoding="utf-8") as f:
++            conversation = json.load(f)
++    except Exception as e:
++        raise AgentConfigValidationError(f"Invalid JSON in conversation.json: {e}")
++
++    # Validate conversation.json fields
++    for field in ["agent_name", "voice_id", "global_prompt", "start_node_id"]:
++        if field not in conversation or not str(conversation[field]).strip():
++            raise AgentConfigValidationError(f"conversation.json is missing required field '{field}'")
++
++    # Load and parse nodes.json
++    try:
++        with open(os.path.join(dir_path, "nodes.json"), "r", encoding="utf-8") as f:
++            nodes = json.load(f)
++    except Exception as e:
++        raise AgentConfigValidationError(f"Invalid JSON in nodes.json: {e}")
++
++    if not isinstance(nodes, list):
++        raise AgentConfigValidationError("nodes.json must contain a list of nodes")
++
++    if not nodes:
++        raise AgentConfigValidationError("nodes.json cannot be empty")
++
++    node_ids = set()
++    has_end_node = False
++    for i, node in enumerate(nodes):
++        if not isinstance(node, dict):
++            raise AgentConfigValidationError(f"Node at index {i} in nodes.json must be an object")
++        node_id = node.get("id")
++        if not node_id or not str(node_id).strip():
++            raise AgentConfigValidationError(f"Node at index {i} is missing a valid 'id' field")
++        if node_id in node_ids:
++            raise AgentConfigValidationError(f"Duplicate node id '{node_id}' in nodes.json")
++        node_ids.add(node_id)
++
++        node_type = node.get("type")
++        if node_type not in {"conversation", "slot_collection", "fallback", "fallback_guided", "function", "end", "message"}:
++            raise AgentConfigValidationError(f"Unsupported type '{node_type}' in node '{node_id}'")
++
++        if node_type == "end":
++            has_end_node = True
++
++        # Validation of localized responses or instruction prompt text
++        response = node.get("response")
++        instruction = node.get("instruction")
++        
++        # In combined schema, response could be a string or a dict. Let's support both.
++        if not response and not instruction:
++            raise AgentConfigValidationError(f"Node '{node_id}' must define either 'response' or 'instruction'")
++
++    # Ensure start node exists
++    start_node_id = conversation["start_node_id"]
++    if start_node_id not in node_ids:
++        raise AgentConfigValidationError(
++            f"start_node_id '{start_node_id}' in conversation.json does not exist in nodes.json"
++        )
++
++    # Ensure at least one end node exists
++    if not has_end_node:
++        raise AgentConfigValidationError("nodes.json must contain at least one node of type 'end'")
++
++    # Load and parse intents.json
++    try:
++        with open(os.path.join(dir_path, "intents.json"), "r", encoding="utf-8") as f:
++            intents = json.load(f)
++    except Exception as e:
++        raise AgentConfigValidationError(f"Invalid JSON in intents.json: {e}")
++
++    if not isinstance(intents, list):
++        raise AgentConfigValidationError("intents.json must contain a list of intent mappings")
++
++    # Load and parse transitions.json
++    try:
++        with open(os.path.join(dir_path, "transitions.json"), "r", encoding="utf-8") as f:
++            transitions = json.load(f)
++    except Exception as e:
++        raise AgentConfigValidationError(f"Invalid JSON in transitions.json: {e}")
++
++    if not isinstance(transitions, list):
++        raise AgentConfigValidationError("transitions.json must contain a list of state transitions")
++
++    # Validate transition targets
++    for i, entry in enumerate(transitions):
++        if not isinstance(entry, dict):
++            raise AgentConfigValidationError(f"Transition entry at index {i} must be an object")
++        from_node_id = entry.get("from_node_id")
++        if not from_node_id:
++            raise AgentConfigValidationError(f"Transition entry at index {i} is missing 'from_node_id'")
++        if from_node_id not in node_ids:
++            raise AgentConfigValidationError(
++                f"Transition from_node_id '{from_node_id}' does not refer to a node in nodes.json"
++            )
++
++        node_transitions = entry.get("transitions")
++        if not isinstance(node_transitions, list):
++            raise AgentConfigValidationError(
++                f"Transition entry for node '{from_node_id}' must have a list of 'transitions'"
++            )
++
++        for j, t in enumerate(node_transitions):
++            if not isinstance(t, dict):
++                raise AgentConfigValidationError(
++                    f"Transition index {j} for node '{from_node_id}' must be an object"
++                )
++            target = t.get("target")
++            if not target:
++                raise AgentConfigValidationError(
++                    f"Transition index {j} for node '{from_node_id}' is missing a 'target' field"
++                )
++            if target not in node_ids:
++                raise AgentConfigValidationError(
++                    f"Transition target '{target}' for node '{from_node_id}' does not exist in nodes.json"
++                )
++
++
++def load_agent_directory(dir_path: str) -> Dict[str, Any]:
++    """Load and compile the split JSON files in a directory into a standard, unified agent schema.
++    
++    Performs full validation before loading.
++    """
++    validate_agent_directory(dir_path)
++
++    # Load all raw configurations
++    with open(os.path.join(dir_path, "conversation.json"), "r", encoding="utf-8") as f:
++        conversation = json.load(f)
++    with open(os.path.join(dir_path, "nodes.json"), "r", encoding="utf-8") as f:
++        nodes = json.load(f)
++    with open(os.path.join(dir_path, "intents.json"), "r", encoding="utf-8") as f:
++        intents = json.load(f)
++    with open(os.path.join(dir_path, "transitions.json"), "r", encoding="utf-8") as f:
++        transitions_list = json.load(f)
++
++    # Build transition map: from_node_id -> list of transitions
++    transition_map = {entry["from_node_id"]: entry["transitions"] for entry in transitions_list}
++
++    assembled_nodes = []
++    for node in nodes:
++        node_id = node["id"]
++        compiled_node = dict(node)
++
++        # Build legacy edges list from transitions.json if present
++        edges = []
++        if node_id in transition_map:
++            for i, t in enumerate(transition_map[node_id]):
++                intent = t.get("intent")
++                target = t.get("target")
++                condition = t.get("condition", intent)
++                
++                edge = {
++                    "id": t.get("id") or f"edge_{node_id}_{target}_{intent}_{i}",
++                    "condition": condition,
++                    "transition_condition": {
++                        "type": "prompt",
++                        "prompt": condition
++                    },
++                    "destination_node_id": target
++                }
++                edges.append(edge)
++        compiled_node["edges"] = edges
++
++        # Auto-inject intent_triggers if this is the start node and none are present
++        if node_id == conversation["start_node_id"] and not compiled_node.get("intent_triggers"):
++            compiled_node["intent_triggers"] = ["call_connected"]
++
++        # Ensure type is converted to legacy format where applicable
++        # (v1 uses 'conversation' for message / input-handling steps)
++        if compiled_node["type"] == "message":
++            compiled_node["type"] = "conversation"
++
++        # Localized response conversion for legacy state_manager compatibility
++        # If response is a dict (e.g. {"en": "...", "hi": "..."}), extract default locale string
++        response_data = compiled_node.get("response")
++        if isinstance(response_data, dict):
++            default_locale = conversation.get("default_locale", "en")
++            # Select default or fall back to first key
++            legacy_response = response_data.get(default_locale) or next(iter(response_data.values()), "")
++            compiled_node["response"] = legacy_response
++            # Keep full translations in localized_responses if needed
++            compiled_node["localized_responses"] = response_data
++        
++        assembled_nodes.append(compiled_node)
++
++    # Compile the final consolidated schema dictionary
++    legacy_schema = {
++        "agent_id": conversation.get("conversation_flow_id", "flow_default"),
++        "agent_name": conversation["agent_name"],
++        "voice_id": conversation["voice_id"],
++        "language": conversation.get("default_locale", "English"),
++        "global_prompt": conversation["global_prompt"],
++        "conversationFlow": {
++            "conversation_flow_id": conversation.get("conversation_flow_id", "flow_default"),
++            "global_prompt": conversation["global_prompt"],
++            "start_node_id": conversation["start_node_id"],
++            "nodes": assembled_nodes,
++            "tools": conversation.get("tools", []),
++            "default_locale": conversation.get("default_locale", "en"),
++            "supported_locales": conversation.get("supported_locales", ["en"]),
++            "intents": intents
++        }
++    }
++
++    # Pass along any extra properties defined at the root of conversation.json
++    for key, val in conversation.items():
++        if key not in legacy_schema and key != "conversationFlow":
++            legacy_schema[key] = val
++
++    return legacy_schema
+diff --git a/flows/runtime.py b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/flows/runtime.py
+index f5a697d..b8c0e7e 100644
+--- a/flows/runtime.py
++++ b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/flows/runtime.py	
+@@ -30,7 +30,7 @@ def _safe_next(gen):
+ _ml_semaphore = asyncio.Semaphore(4)
+ 
+ try:
+-    from pipecat.frames.frames import AudioRawFrame, Frame, TextFrame, CancelFrame
++    from pipecat.frames.frames import AudioRawFrame, Frame, TextFrame, CancelFrame, EndFrame
+     from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
+ except ImportError:
+     logging.error("pipecat-ai is not installed. Pipeline will fail.")
+@@ -40,6 +40,7 @@ except ImportError:
+     TextFrame = None
+     AudioRawFrame = None
+     CancelFrame = None
++    EndFrame = None
+ 
+ from llm.llm import generate_response
+ from llm.language_utils import LanguageTracker, analyze_user_text, localize_template
+@@ -58,7 +59,7 @@ try:
+ except ImportError:
+     logging.warning("stt.stt.transcribe_audio not available yet. Using mock STT.")
+ 
+-    def transcribe_audio(audio_chunk: bytes, agent_id: str = "default") -> str:
++    def transcribe_audio(audio_chunk: bytes, agent_id: str = "default", language: str | None = None) -> str:
+         return "mock transcription"
+ 
+ try:
+@@ -88,9 +89,10 @@ _KNOWN_HALLUCINATION_PHRASES = (
+ )
+ 
+ 
+-@dataclass
+ class AgentTextFrame(TextFrame):
+-    language: str = "en"
++    def __init__(self, text: str, language: str = "en"):
++        super().__init__(text)
++        self.language = language
+ 
+ 
+ class VoiceTurnState:
+@@ -218,7 +220,6 @@ class RealEstateLLMProcessor(FrameProcessor):
+             return
+ 
+         logger.info("[PIPELINE] LLM <- User transcript (%s): %s", type(frame).__name__, user_text)
+-        await self.push_frame(frame, direction)
+ 
+         # Always process transcript frames (no strict intent/node filtering at this layer).
+         user_analysis = analyze_user_text(user_text, fallback=self.current_language)
+@@ -325,12 +326,189 @@ class RealEstateLLMProcessor(FrameProcessor):
+             logger.error("[PIPELINE] LLM -> Failed forwarding agent reply frame: %s", exc)
+ 
+ 
++class VADProcessor(FrameProcessor):
++    """Voice Activity Detection preprocessing layer."""
++
++    def __init__(
++        self,
++        turn_state: VoiceTurnState | None = None,
++        min_voice_start_ms: int | None = None,
++        max_speech_duration_ms: int | None = None,
++        silence_timeout_ms: int | None = None,
++        noise_multiplier: float | None = None,
++        base_threshold: float | None = None,
++        max_threshold: float | None = None,
++    ):
++        super().__init__()
++        self.turn_state = turn_state
++        self.audio_buffer = bytearray()
++        
++        # Expose parameters as configurable, falling back to stt_cfg
++        effective_min_ms = min_voice_start_ms or getattr(stt_cfg, "VAD_MIN_VOICE_START_MS", stt_cfg.MIN_CHUNK_MS)
++        effective_max_ms = max_speech_duration_ms or getattr(stt_cfg, "VAD_MAX_SPEECH_DURATION_MS", 4500)
++        effective_trailing_ms = silence_timeout_ms or getattr(stt_cfg, "VAD_SILENCE_TIMEOUT_MS", 600)
++        
++        self.min_chunk_bytes = _ms_to_bytes(effective_min_ms, stt_cfg.TARGET_SAMPLE_RATE)
++        self.max_chunk_bytes = _ms_to_bytes(effective_max_ms, stt_cfg.TARGET_SAMPLE_RATE)
++        self.trailing_window_bytes = _ms_to_bytes(effective_trailing_ms, stt_cfg.TARGET_SAMPLE_RATE)
++        
++        self.noise_floor_percentile = getattr(stt_cfg, "VAD_NOISE_FLOOR_PERCENTILE", 10.0)
++        self.noise_multiplier = noise_multiplier or getattr(stt_cfg, "VAD_NOISE_MULTIPLIER", 6.0)
++        self.base_threshold = base_threshold or getattr(stt_cfg, "VAD_BASE_THRESHOLD", 0.007)
++        self.max_threshold = max_threshold or getattr(stt_cfg, "VAD_MAX_THRESHOLD", 0.018)
++        
++        self.is_speaking = False
++        self._voice_hits = 0
++        self._voiced_ms = 0.0
++        self._last_voice_at = 0.0
++        self._speech_end_silence_ms = float(effective_trailing_ms)
++        self._barge_in_min_ms = 550.0
++        self._barge_in_sent = False
++        self._cooldown_until = 0.0
++        self.noise_floor = 0.010
++        self._rms_history = []
++
++    async def process_frame(self, frame: Frame, direction: FrameDirection = None):  # type: ignore
++        await super().process_frame(frame, direction)
++        if not isinstance(frame, AudioRawFrame):
++            await self.push_frame(frame, direction)
++            return
++
++        pcm16 = _ensure_pcm16(frame.audio, frame.sample_rate, stt_cfg.TARGET_SAMPLE_RATE)
++        if not pcm16: return
++
++        # Ignore inbound mic audio while TTS is actively speaking (or in short post-TTS cooldown).
++        if self.turn_state and self.turn_state.is_stt_blocked():
++            self.audio_buffer.clear()
++            self.is_speaking = False
++            self._voice_hits = 0
++            self._voiced_ms = 0.0
++            self._barge_in_sent = False
++            return
++        if time.monotonic() < self._cooldown_until:
++            return
++
++        # Calculate current RMS
++        samples = np.frombuffer(pcm16, dtype=np.int16).astype(np.float32)
++        chunk_rms = float(np.sqrt(np.mean(samples**2)) / 32768.0)
++        chunk_duration_ms = (len(samples) / stt_cfg.TARGET_SAMPLE_RATE) * 1000.0
++        if logger.isEnabledFor(logging.INFO) and chunk_rms > 0.005:
++            logger.info(
++                "[VAD] <- Audio frame bytes=%d duration_ms=%.1f rms=%.4f speaking=%s blocked=%s",
++                len(pcm16),
++                chunk_duration_ms,
++                chunk_rms,
++                self.is_speaking,
++                bool(self.turn_state and self.turn_state.is_stt_blocked()),
++            )
++        
++        # Continuous Calibration: Track bottom percentile of energy as noise floor
++        self._rms_history.append(chunk_rms)
++        if len(self._rms_history) > 50:
++            self._rms_history.pop(0)
++            self.noise_floor = float(np.percentile(self._rms_history, self.noise_floor_percentile))
++        
++        # Adaptive activation threshold:
++        dynamic_threshold = max(self.noise_floor * self.noise_multiplier, self.noise_floor + 0.004, self.base_threshold)
++        dynamic_threshold = min(dynamic_threshold, self.max_threshold)
++        now_mono = time.monotonic()
++        voice_presence_threshold = max(dynamic_threshold * 0.50, self.noise_floor + 0.0025)
++        strong_voice_threshold = max(dynamic_threshold * 1.20, self.noise_floor + 0.008)
++
++        # Ignore silence/background chunks.
++        if not self.is_speaking:
++            if chunk_rms >= strong_voice_threshold:
++                self._voice_hits = 2
++            elif chunk_rms > dynamic_threshold:
++                self._voice_hits += 1
++            else:
++                self._voice_hits = max(0, self._voice_hits - 1)
++                self._voiced_ms = 0.0
++                return
++            if self._voice_hits < 2:
++                return
++            self.is_speaking = True
++            self._voice_hits = 0
++            self._voiced_ms = 0.0
++            self._barge_in_sent = False
++            self._last_voice_at = now_mono
++            self.audio_buffer.clear()
++            logger.info(
++                "[VAD DEBUG] RMS=%.4f threshold=%.4f floor=%.4f speaking=True",
++                chunk_rms,
++                dynamic_threshold,
++                self.noise_floor,
++            )
++            logger.info(
++                "[VAD EVENT] speech_start timestamp=%.3f rms=%.4f threshold=%.4f floor=%.4f source_rate=%d",
++                time.time(),
++                chunk_rms,
++                dynamic_threshold,
++                self.noise_floor,
++                getattr(frame, "sample_rate", 0),
++            )
++
++        self._voiced_ms += chunk_duration_ms
++        if chunk_rms >= voice_presence_threshold:
++            self._last_voice_at = now_mono
++
++        # Barge-in cancellation: only when TTS is actively speaking and speech is sustained.
++        if (
++            not self._barge_in_sent
++            and self.turn_state
++            and self.turn_state.tts_active
++            and self._voiced_ms >= self._barge_in_min_ms
++        ):
++            self._barge_in_sent = True
++            logger.info(
++                "[VAD] -> Sustained speech detected during TTS (%.0fms). Emitting CancelFrame.",
++                self._voiced_ms,
++            )
++            await self.push_frame(CancelFrame(), direction)
++
++        self.audio_buffer.extend(pcm16)
++        if len(self.audio_buffer) < self.min_chunk_bytes:
++            return
++
++        silence_elapsed_ms = (now_mono - self._last_voice_at) * 1000.0
++        if len(self.audio_buffer) < self.max_chunk_bytes and silence_elapsed_ms < self._speech_end_silence_ms:
++            return
++        if len(self.audio_buffer) < self.max_chunk_bytes and not _has_trailing_silence(
++            self.audio_buffer,
++            self.trailing_window_bytes,
++            voice_presence_threshold,
++        ):
++            return
++
++        chunk = bytes(self.audio_buffer)
++        buffered_ms = (len(self.audio_buffer) / 2.0) / float(stt_cfg.TARGET_SAMPLE_RATE) * 1000.0
++        logger.info(
++            "[VAD EVENT] speech_end timestamp=%.3f buffered_ms=%.1f bytes=%d silence_ms=%.1f voiced_ms=%.1f",
++            time.time(),
++            buffered_ms,
++            len(self.audio_buffer),
++            silence_elapsed_ms,
++            self._voiced_ms,
++        )
++        self.audio_buffer.clear()
++        self.is_speaking = False
++        self._barge_in_sent = False
++        self._voice_hits = 0
++        self._voiced_ms = 0.0
++        
++        # Emit complete buffered audio frame to downstream STT
++        out_frame = AudioRawFrame(audio=chunk, sample_rate=stt_cfg.TARGET_SAMPLE_RATE, num_channels=1)
++        _ensure_frame_runtime_attrs(out_frame)
++        await self.push_frame(out_frame, direction)
++
++
+ class RealEstateSTTProcessor(FrameProcessor):
+     """Low-latency STT with Adaptive VAD (Noise Floor Calibration)."""
+ 
+-    def __init__(self, turn_state: VoiceTurnState | None = None, agent_id: str = "default"):
++    def __init__(self, turn_state: VoiceTurnState | None = None, agent_id: str = "default", vad_enabled: bool = True):
+         super().__init__()
+         self.agent_id = agent_id or "default"
++        self.vad_enabled = vad_enabled
+         self.audio_buffer = bytearray()
+         effective_max_ms = max(stt_cfg.MAX_CHUNK_MS, 4500)
+         effective_trailing_ms = max(stt_cfg.TRAILING_SILENCE_MS, int(os.getenv("STT_EFFECTIVE_TRAILING_MS", "600")))
+@@ -359,6 +537,55 @@ class RealEstateSTTProcessor(FrameProcessor):
+             await self.push_frame(frame, direction)
+             return
+ 
++        if not self.vad_enabled:
++            pcm16 = _ensure_pcm16(frame.audio, frame.sample_rate, stt_cfg.TARGET_SAMPLE_RATE)
++            if not pcm16: return
++
++            logger.info("[PIPELINE] STT -> Pre-segmented speech received, transcribing bytes=%d", len(pcm16))
++            try:
++                # 2. CIRCUIT BREAKER (STT Timeout)
++                async with _ml_semaphore:
++                    session_lang = "en"
++                    if self.turn_state and hasattr(self.turn_state, "session_language"):
++                        session_lang = self.turn_state.session_language
++
++                    text = await asyncio.wait_for(
++                        asyncio.get_running_loop().run_in_executor(
++                            _executor,
++                            lambda: transcribe_audio(pcm16, self.agent_id, language=session_lang),
++                        ),
++                        timeout=3.5
++                    )
++            except asyncio.TimeoutError:
++                logger.error("STT Timeout (Skipping chunk)")
++                return
++            except Exception:
++                return
++
++            normalized_text = _normalize_text(text)
++            if not normalized_text or len(normalized_text) < stt_cfg.MIN_TRANSCRIPT_CHARS or not _is_actionable_transcript(text):
++                logger.warning(
++                    "[PIPELINE] STT -> Dropped empty/non-actionable transcript bytes=%d text=%r",
++                    len(pcm16),
++                    text,
++                )
++                self._cooldown_until = time.monotonic() + 0.35
++                return
++
++            now = time.monotonic()
++            if _is_duplicate_text(text, self.last_emitted_text) and (now - self.last_emit_at) < stt_cfg.DUPLICATE_TEXT_WINDOW_S:
++                self._cooldown_until = now + 0.35
++                return
++
++            self.last_emitted_text = text
++            self.last_emit_at = now
++            self._cooldown_until = now + 0.20
++            logger.info("[PIPELINE] STT -> Emitting transcript: %s", text)
++            text_frame = TextFrame(text=text)
++            _ensure_frame_runtime_attrs(text_frame)
++            await self.push_frame(text_frame, direction)
++            return
++
+         pcm16 = _ensure_pcm16(frame.audio, frame.sample_rate, stt_cfg.TARGET_SAMPLE_RATE)
+         if not pcm16: return
+ 
+@@ -367,6 +594,7 @@ class RealEstateSTTProcessor(FrameProcessor):
+             self.audio_buffer.clear()
+             self.is_speaking = False
+             self._voice_hits = 0
++
+             self._voiced_ms = 0.0
+             self._barge_in_sent = False
+             return
+@@ -588,6 +816,14 @@ class RealEstateTTSProcessor(FrameProcessor):
+                 return
+ 
+         if not isinstance(frame, TextFrame):
++            if isinstance(frame, EndFrame):
++                # Wait for active synthesis to complete before ending the pipeline and closing the socket
++                if self._tts_task and not self._tts_task.done():
++                    try:
++                        logger.info("[PIPELINE] TTS -> Waiting for active synthesis to complete before sending EndFrame.")
++                        await self._tts_task
++                    except Exception as e:
++                        logger.warning("[PIPELINE] TTS -> Error waiting for active synthesis task: %s", e)
+             await self.push_frame(frame, direction)
+             return
+ 
+diff --git a/flows/v2/__pycache__/__init__.cpython-312.pyc b/flows/v2/__pycache__/__init__.cpython-312.pyc
+deleted file mode 100644
+index 86ec618..0000000
+Binary files a/flows/v2/__pycache__/__init__.cpython-312.pyc and /dev/null differ
+diff --git a/flows/v2/__pycache__/__init__.cpython-314.pyc b/flows/v2/__pycache__/__init__.cpython-314.pyc
+deleted file mode 100644
+index 150273d..0000000
+Binary files a/flows/v2/__pycache__/__init__.cpython-314.pyc and /dev/null differ
+diff --git a/flows/v2/__pycache__/preview.cpython-312.pyc b/flows/v2/__pycache__/preview.cpython-312.pyc
+deleted file mode 100644
+index ef1ed7a..0000000
+Binary files a/flows/v2/__pycache__/preview.cpython-312.pyc and /dev/null differ
+diff --git a/flows/v2/__pycache__/preview.cpython-314.pyc b/flows/v2/__pycache__/preview.cpython-314.pyc
+deleted file mode 100644
+index 2ae778a..0000000
+Binary files a/flows/v2/__pycache__/preview.cpython-314.pyc and /dev/null differ
+diff --git a/flows/v2/__pycache__/shadow_runner.cpython-312.pyc b/flows/v2/__pycache__/shadow_runner.cpython-312.pyc
+deleted file mode 100644
+index a958301..0000000
+Binary files a/flows/v2/__pycache__/shadow_runner.cpython-312.pyc and /dev/null differ
+diff --git a/flows/v2/__pycache__/shadow_runner.cpython-314.pyc b/flows/v2/__pycache__/shadow_runner.cpython-314.pyc
+deleted file mode 100644
+index 2455ee6..0000000
+Binary files a/flows/v2/__pycache__/shadow_runner.cpython-314.pyc and /dev/null differ
+diff --git a/flows/v2/__pycache__/spec.cpython-312.pyc b/flows/v2/__pycache__/spec.cpython-312.pyc
+deleted file mode 100644
+index bab0be8..0000000
+Binary files a/flows/v2/__pycache__/spec.cpython-312.pyc and /dev/null differ
+diff --git a/flows/v2/__pycache__/spec.cpython-314.pyc b/flows/v2/__pycache__/spec.cpython-314.pyc
+deleted file mode 100644
+index e240b09..0000000
+Binary files a/flows/v2/__pycache__/spec.cpython-314.pyc and /dev/null differ

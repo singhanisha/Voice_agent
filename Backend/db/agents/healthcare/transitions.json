@@ -1,0 +1,24 @@
+[
+    {
+        "from_node_id": "root_greeting",
+        "transitions": [
+            {
+                "id": "to_discovery",
+                "intent": "patient confirms identity",
+                "target": "discovery",
+                "condition": "patient confirms identity"
+            }
+        ]
+    },
+    {
+        "from_node_id": "discovery",
+        "transitions": [
+            {
+                "id": "to_end",
+                "intent": "appointment qualified",
+                "target": "end_node",
+                "condition": "appointment qualified"
+            }
+        ]
+    }
+]

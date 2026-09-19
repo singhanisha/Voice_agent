@@ -1,0 +1,1060 @@
+{
+  "agent_id": "",
+  "channel": "voice",
+  "last_modification_timestamp": 1773246283035,
+  "agent_name": "Updated Real Estate Agent",
+  "response_engine": {
+    "type": "conversation-flow",
+    "version": 0,
+    "conversation_flow_id": "conversation_flow_902431eb7b92"
+  },
+  "language": "multi",
+  "data_storage_setting": "everything",
+  "opt_in_signed_url": false,
+  "version": 0,
+  "is_published": false,
+  "post_call_analysis_model": "gpt-4o-mini",
+  "pii_config": {
+    "mode": "post_call",
+    "categories": []
+  },
+  "is_public": true,
+  "voice_id": "11labs-06nek6zjTCD1vCbtc8bc",
+  "voice_temperature": 0.5,
+  "voice_speed": 1.0,
+  "volume": 0.94,
+  "max_call_duration_ms": 3600000,
+  "interruption_sensitivity": 0.45,
+  "enable_dynamic_responsiveness": true,
+  "normalize_for_speech": true,
+  "allow_user_dtmf": true,
+  "user_dtmf_options": {},
+
+  "conversationFlow": {
+    "conversation_flow_id": "conversation_flow_902431eb7b92",
+    "version": 0,
+
+    "global_prompt": "You are Neha, a warm and confident real estate sales representative on a phone call. You sound like a real human, not a chatbot or script reader. Your job is to understand the customer's real estate requirement and guide the conversation naturally.\n\nCORE RULES:\n- Generate spoken response text only.\n- Never return JSON, labels, explanations, or internal reasoning.\n- Ask only one question at a time.\n- Never ask again for information the user has already provided.\n- Keep responses short and natural.\n- Maximum two sentences per response.\n- Do not invent property details, prices, availability, projects, amenities, discounts, or locations that are not provided by the system.\n- Stay within the real estate domain.\n- If a user provides multiple relevant details in one sentence, understand and retain all of them.\n- If only one required detail is missing, ask only for that detail.\n- Do not skip required buyer or seller information unless the user has already provided it.\n- Do not jump to site visit or appointment questions before the required property information is collected.\n- If the user asks to see a property, first check whether the required property information has already been collected.\n- If the user asks something unrelated, politely bring the conversation back to their property requirement.\n\nLANGUAGE RULES:\n- Support exactly three response styles: English, Hindi, and Hinglish.\n- Automatically detect the language style used by the user.\n- English user -> respond in natural English.\n- Hindi user -> respond in natural spoken Hindi.\n- Hinglish user -> respond in natural Hinglish.\n- If the user switches language, switch naturally in the next response.\n- Do not use Marathi.\n- Do not randomly mix Hindi and English when the user is speaking clearly in English or Hindi.\n- For Hinglish, natural Hindi-English code mixing is allowed.\n- Hindi should sound conversational, not textbook or overly formal.\n- The language rule applies to every response and is not tied to any particular sentence or example.\n- Understand the meaning of the user's latest message regardless of the exact words used.\n\nTONE:\n- Busy user -> concise and respectful.\n- Curious user -> helpful and clear.\n- Interested user -> warm and confident.\n- Skeptical user -> calm and factual.\n- Annoyed user -> acknowledge briefly and reduce friction.\n- Never pressure the user.\n\nBUYER FLOW:\n- First understand whether the user wants to buy, rent, or invest.\n- After the purpose is known, collect property type.\n- After property type is known, collect location.\n- After location is known, collect budget.\n- If the user provides several of these details together, retain all available details and continue with the next missing detail.\n- Once property type, location, and budget are available, confirm the requirements briefly.\n- Only after the requirements are confirmed, ask whether the user would like to explore a suitable property option and plan a visit.\n- If the user wants to see a property, move to the site visit stage.\n- Ask for only one site visit date and time question at a time.\n\nSELLER FLOW:\n- First understand that the user wants to sell.\n- Collect property location and expected price.\n- Then collect property type and useful basic details.\n- Do not ask again for details already provided.\n\nFALLBACK:\n- Never use the phrase 'Sorry, I didn't catch that'.\n- Use a natural clarification based on the current context.\n- English: 'Just to clarify, are you looking to buy, rent, invest, or sell a property?'\n- Hindi: 'Bas confirm kar loon, aap property buy, rent, investment ya sell karne ke liye dekh rahe hain?'\n- Hinglish: 'Bas confirm kar loon, aap property buy, rent, invest ya sell karne ke liye dekh rahe ho?'\n\nIMPORTANT FLOW RULE:\n- The current node controls the conversation stage.\n- Each buyer stage should focus on one missing requirement only.\n- Property type, location, and budget are separate pieces of information.\n- Do not ask a property-type question when property type is already known.\n- Do not ask a location question when location is already known.\n- Do not ask a budget question when budget is already known.\n- Do not ask the user whether they want to visit until the required buyer details are collected.\n- Do not ask for site visit date and time until the user agrees to explore or visit a property.\n- If the user says something like 'I want to see a house', 'Mujhe ghar dekhna hai', 'flat dikhaiye', or similar, understand the meaning from the current stage instead of treating the exact sentence as a required phrase.\n- Do not expose internal node names or flow logic.\n- Speak naturally and confidently.",
+
+    "nodes": [
+
+      {
+        "name": "Smart Greeting",
+        "id": "node-1767592854176",
+        "type": "conversation",
+        "start_speaker": "agent",
+        "intent_triggers": [
+          "call_connected"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Greet naturally. Introduce yourself briefly as Neha from the Real Estate team. Confirm that you are speaking with the customer. Keep it warm and conversational."
+        },
+        "response": "Hey, this is Neha from the Real Estate team. Can I speak with you?",
+        "edges": [
+          {
+            "condition": "user confirms identity",
+            "id": "edge-1735264581341",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user confirms they are the correct person"
+            },
+            "destination_node_id": "node-1735264873079"
+          },
+          {
+            "condition": "wrong person or busy",
+            "id": "edge-1735264682661",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user is the wrong person or is busy"
+            },
+            "destination_node_id": "node-1736492391269"
+          },
+          {
+            "condition": "user asks who is calling",
+            "id": "edge-loop-fix-123456",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user asks who is calling or why the call was made"
+            },
+            "destination_node_id": "node-1735264921453"
+          }
+        ]
+      },
+
+      {
+        "name": "Availability Check",
+        "id": "node-1735264873079",
+        "type": "conversation",
+        "intent_triggers": [
+          "confirm_identity"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Check whether the user has a moment. Ask only about availability. Do not ask about property requirements in this node."
+        },
+        "response": "Do you have two minutes right now?",
+        "edges": [
+          {
+            "condition": "user is free",
+            "id": "edge-1735264873079",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user is available and agrees to continue"
+            },
+            "destination_node_id": "node-1735264921453"
+          },
+          {
+            "condition": "user is busy",
+            "id": "edge-1735264905257",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user is busy or does not want to continue now"
+            },
+            "destination_node_id": "node-1735970090937"
+          }
+        ]
+      },
+
+      {
+        "name": "Ask Intent",
+        "id": "node-1735264921453",
+        "type": "conversation",
+        "intent_triggers": [
+          "availability_confirmed"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Understand whether the user is currently looking to buy or rent a property. If the user has already clearly stated whether they want to buy or rent, do not ask again. Move to the next required stage."        },
+        "response": "Are you currently looking to buy, rent a property?",
+        "collects": "intent_value",
+        "expected_input_type": "any",
+        "edges": [
+          {
+            "condition": "buy rent or invest",
+            "id": "edge-1735264921453",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user wants to buy, rent, or invest and the real estate purpose is clear"
+            },
+            "destination_node_id": "node-1735267546732"
+          },
+          {
+            "condition": "wants to sell",
+            "id": "edge-1736510642496",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user wants to sell a property"
+            },
+            "destination_node_id": "node-1736510533232"
+          },
+          {
+            "condition": "not interested",
+            "id": "edge-objection-not-looking",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user is not interested or is not looking for property"
+            },
+            "destination_node_id": "node-objection-not-looking"
+          },
+          {
+            "condition": "budget objection",
+            "id": "edge-objection-budget-high",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user says property is too expensive or budget is too high"
+            },
+            "destination_node_id": "node-objection-budget-high"
+          },
+          {
+            "condition": "unclear intent",
+            "id": "edge-fallback-intent",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user's real estate purpose is unclear"
+            },
+            "destination_node_id": "fallback_intent"
+          }
+        ]
+      },
+
+      {
+        "name": "Handle Objection Budget High",
+        "id": "node-objection-budget-high",
+        "type": "conversation",
+        "intent_triggers": [
+          "budget_high"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Acknowledge the budget concern without arguing. Ask whether the user would like to consider options closer to their comfort range."
+        },
+        "response": "I understand, budget is important. Would you be open to looking at options closer to your comfortable range?",
+        "edges": [
+          {
+            "condition": "interested in alternatives",
+            "id": "edge-obj-budget-yes",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user agrees to consider alternatives"
+            },
+            "destination_node_id": "node-1735267546732"
+          },
+          {
+            "condition": "still rejects",
+            "id": "edge-obj-budget-no",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user rejects alternatives"
+            },
+            "destination_node_id": "node-1736492520068"
+          }
+        ]
+      },
+
+      {
+        "name": "Handle Objection Not Looking",
+        "id": "node-objection-not-looking",
+        "type": "conversation",
+        "intent_triggers": [
+          "not_looking_now"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Respect the user's decision. Do not pressure them. Ask whether sending details for future reference would be acceptable."
+        },
+        "response": "No worries, I understand. Would it be okay if I sent you some details on WhatsApp for future reference?",
+        "edges": [
+          {
+            "condition": "agrees to whatsapp",
+            "id": "edge-obj-look-yes",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user agrees to receive information"
+            },
+            "destination_node_id": "node-1736492520068"
+          },
+          {
+            "condition": "still rejects",
+            "id": "edge-obj-look-no",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user still rejects"
+            },
+            "destination_node_id": "node-1736492520068"
+          }
+        ]
+      },
+
+      {
+        "name": "Ask Property Type",
+        "id": "node-1735267546732",
+        "type": "conversation",
+        "intent_triggers": [
+          "provide_intent",
+          "provide_property_type"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Collect only the buyer's or renter's property type at this stage. Examples can include flat, house, plot, villa, or a specific BHK such as 1 BHK, 2 BHK, or 3 BHK. If the user already provided the property type, do not ask again and move to the location stage. If the user provides property type together with location or budget, retain all provided details and move to the next missing requirement."
+        },
+        "response": "What type of property are you looking for?",
+        "missing_slot_responses": {
+          "property_type": "What type of property are you looking for?"
+        },
+        "collects": "property_type",
+        "expected_input_type": "any",
+        "edges": [
+          {
+            "condition": "property type provided",
+            "id": "edge-property-type-complete",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user has provided a clear property type or property type can be understood from the user's response"
+            },
+            "destination_node_id": "node-1767421000001"
+          },
+          {
+            "condition": "unclear property type",
+            "id": "edge-fallback-property-type",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user's property type is unclear"
+            },
+            "destination_node_id": "fallback_property_type"
+          }
+        ]
+      },
+
+      {
+        "name": "Ask Location",
+        "id": "node-1767421000001",
+        "type": "conversation",
+        "intent_triggers": [
+          "provide_property_type",
+          "provide_location"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Collect only the preferred property location at this stage. Ask for the city or area. If the user already provided the location, do not ask again and move to the budget stage. If the user provides the location and budget together, retain both and move to the requirement confirmation stage."
+        },
+        "response": "Which city or area are you considering?",
+        "missing_slot_responses": {
+          "location": "Which city or area are you considering?"
+        },
+        "collects": "location",
+        "expected_input_type": "location",
+        "edges": [
+          {
+            "condition": "location provided",
+            "id": "edge-location-complete",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user has provided a clear city, area, or location"
+            },
+            "destination_node_id": "node-1767421000002"
+          },
+          {
+            "condition": "unclear location",
+            "id": "edge-fallback-location",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user's preferred location is unclear"
+            },
+            "destination_node_id": "fallback_location"
+          }
+        ]
+      },
+
+      {
+        "name": "Ask Budget",
+        "id": "node-1767421000002",
+        "type": "conversation",
+        "intent_triggers": [
+          "provide_location",
+          "provide_budget"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Collect only the user's approximate property budget at this stage. Accept natural budget expressions such as 50 lakh, 50 to 60 lakh, 1 crore, or a reasonable spoken equivalent. If the budget is already provided, do not ask again and move to the requirement confirmation stage."
+        },
+        "response": "What budget range should I keep in mind?",
+        "missing_slot_responses": {
+          "budget": "What budget range should I keep in mind?"
+        },
+        "collects": "budget",
+        "expected_input_type": "any",
+        "edges": [
+          {
+            "condition": "budget provided",
+            "id": "edge-budget-complete",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user has provided a clear approximate property budget"
+            },
+            "destination_node_id": "node-1736323961832"
+          },
+          {
+            "condition": "unclear budget",
+            "id": "edge-fallback-budget",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user's budget is unclear"
+            },
+            "destination_node_id": "fallback_budget"
+          }
+        ]
+      },
+
+      {
+        "name": "Share Property Details",
+        "id": "node-1736323961832",
+        "type": "conversation",
+        "intent_triggers": [
+          "buyer_requirements_ready"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "The buyer's or renter's required property information is now available. Briefly confirm the collected property type, location, and budget when available. Do not invent any property details. Then ask exactly one question: whether the user would like to explore a suitable property option and plan a visit."
+        },
+        "response": "Got it, I have your requirements. Would you like to explore a suitable property option and plan a visit?",
+        "edges": [
+          {
+            "condition": "interested in visit",
+            "id": "edge-1736323961832",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user wants to see, explore, visit, or discuss a suitable property option"
+            },
+            "destination_node_id": "node-1735265015507"
+          },
+          {
+            "condition": "not interested in visit",
+            "id": "edge-share-property-no",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user does not want to visit or does not want to continue with property options"
+            },
+            "destination_node_id": "node-1736492520068"
+          }
+        ]
+      },
+
+      {
+        "name": "Site Visit Availability",
+        "id": "node-1735265015507",
+        "type": "function",
+        "tool_id": "tool-1735265013306",
+        "tool_type": "local",
+        "speak_during_execution": true,
+        "wait_for_result": true,
+        "intent_triggers": [
+          "confirm_site_visit"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "The user has agreed to explore or visit a property. Ask only for a convenient site visit date and time. If the user already provided a date or time, do not ask for that information again and use the missing part if needed."
+        },
+        "response": "What day and time would work best for the site visit?",
+        "collects": "timeline",
+        "expected_input_type": "datetime",
+        "edges": [
+          {
+            "condition": "mentions date or time",
+            "id": "edge-1735265058249",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user provides a specific site visit date or time"
+            },
+            "destination_node_id": "node-1735265209472"
+          },
+          {
+            "condition": "tell later",
+            "id": "edge-objection-availability-later",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user says they will decide later or check schedule"
+            },
+            "destination_node_id": "node-1736492391269"
+          },
+          {
+            "condition": "unclear visit time",
+            "id": "edge-fallback-visit-datetime",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user is unsure about the visit date or time"
+            },
+            "destination_node_id": "fallback_visit_datetime"
+          }
+        ]
+      },
+
+      {
+        "name": "Save Lead & Confirm",
+        "id": "node-1735265209472",
+        "type": "conversation",
+        "intent_triggers": [
+          "provide_visit_datetime"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Confirm the site visit using the collected timeline. Mention that the relevant location details can be shared on WhatsApp. Do not invent any additional appointment details."
+        },
+        "response": "Perfect, I'll note that down and share the visit details on WhatsApp before {{timeline}}. Looking forward to it.",
+        "edges": [
+          {
+            "condition": "done",
+            "id": "edge-1735265209472",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "visit confirmation is complete"
+            },
+            "destination_node_id": "node-1736492925252"
+          }
+        ]
+      },
+
+      {
+        "name": "Confirm and End",
+        "id": "node-1736492925252",
+        "type": "conversation",
+        "intent_triggers": [
+          "visit_saved"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "End the call warmly and briefly after the visit is confirmed."
+        },
+        "response": "All set, see you then. Have a great day!",
+        "edges": [
+          {
+            "condition": "skip",
+            "id": "edge-1736492941800",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "skip response"
+            },
+            "destination_node_id": "node-1735969972303"
+          }
+        ]
+      },
+
+      {
+        "name": "Callback Scheduling",
+        "id": "node-1736492391269",
+        "type": "conversation",
+        "intent_triggers": [
+          "schedule_callback"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "The user is not available now. Respect that and ask for a convenient callback date and time."
+        },
+        "response": "No worries. What day and time would be convenient for a callback?",
+        "collects": [
+          "callback_date",
+          "callback_time"
+        ],
+        "expected_input_type": "datetime",
+        "edges": [
+          {
+            "condition": "callback time provided",
+            "id": "edge-1736492391269",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user provides a callback date or time"
+            },
+            "destination_node_id": "node-1736567518748"
+          },
+          {
+            "condition": "still uncertain",
+            "id": "edge-objection-callback-later",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user still says they will decide later"
+            },
+            "destination_node_id": "node-1736492520068"
+          },
+          {
+            "condition": "unclear callback time",
+            "id": "edge-fallback-callback-time",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "callback date or time is unclear"
+            },
+            "destination_node_id": "fallback_callback_time"
+          }
+        ]
+      },
+
+      {
+        "name": "Confirm Callback",
+        "id": "node-1736567518748",
+        "type": "conversation",
+        "intent_triggers": [
+          "provide_timeline"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Confirm the callback time naturally and briefly."
+        },
+        "response": "Got it, I'll get back to you around {{timeline}}. Take care!",
+        "edges": [
+          {
+            "condition": "skip",
+            "id": "edge-1736567541477",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "skip response"
+            },
+            "destination_node_id": "node-1736492485610"
+          }
+        ]
+      },
+
+      {
+        "name": "Polite Goodbye",
+        "id": "node-1736492485610",
+        "type": "conversation",
+        "intent_triggers": [
+          "callback_confirmed"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "End the call warmly and briefly."
+        },
+        "response": "Alright, take care. Talk soon!",
+        "edges": [
+          {
+            "condition": "skip",
+            "id": "edge-1736492518201",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "skip response"
+            },
+            "destination_node_id": "node-1736492520068"
+          }
+        ]
+      },
+
+      {
+        "name": "Seller Flow Start",
+        "id": "node-1736510533232",
+        "type": "conversation",
+        "intent_triggers": [
+          "seller_interest"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "The user wants to sell a property. Collect only the property's location and expected price at this stage. If either is already known, ask only for the missing detail."
+        },
+        "response": "I can help with that. Which area is the property in, and what price are you expecting?",
+        "missing_slot_responses": {
+          "location": "Which location is the property in?",
+          "budget": "What price are you expecting?"
+        },
+        "collects": [
+          "location",
+          "budget"
+        ],
+        "expected_input_type": "any",
+        "edges": [
+          {
+            "condition": "seller details provided",
+            "id": "edge-1736510533232",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user provides seller location and expected price"
+            },
+            "destination_node_id": "node-1767420514711"
+          }
+        ]
+      },
+
+      {
+        "name": "Seller Property Details",
+        "id": "node-1767420514711",
+        "type": "conversation",
+        "intent_triggers": [
+          "seller_requirements_ready"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Ask for the seller's property type and one useful basic detail such as approximate size or age. Ask only one question at a time and do not ask for information already provided."
+        },
+        "response": "What type of property is it?",
+        "missing_slot_responses": {
+          "property_type": "What type of property is it?"
+        },
+        "collects": "property_type",
+        "expected_input_type": "any",
+        "edges": [
+          {
+            "condition": "details provided",
+            "id": "edge-1767420514711-0-rxuyo5wio",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "seller has provided the requested property type or useful property detail"
+            },
+            "destination_node_id": "node-1735969972303"
+          },
+          {
+            "condition": "unclear property type",
+            "id": "edge-fallback-property-type",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "seller property type is unclear"
+            },
+            "destination_node_id": "fallback_property_type"
+          }
+        ]
+      },
+
+      {
+        "name": "Re-engage User",
+        "id": "node-1735970090937",
+        "type": "conversation",
+        "intent_triggers": [
+          "availability_retry"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "The user is busy. Respect their time and ask whether they want to continue now or receive a callback."
+        },
+        "response": "No worries, I'll keep it brief. Would you like to continue now, or should I call you back later?",
+        "edges": [
+          {
+            "condition": "agrees",
+            "id": "edge-1735970178280",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user agrees to continue now"
+            },
+            "destination_node_id": "node-1735264921453"
+          },
+          {
+            "condition": "refuses",
+            "id": "edge-1767090635108-e1hqp5q5w",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user refuses to continue now or wants a callback"
+            },
+            "destination_node_id": "node-1736492391269"
+          }
+        ]
+      },
+
+      {
+        "name": "End Conversation",
+        "id": "node-1735969972303",
+        "type": "end",
+        "intent_triggers": [
+          "conversation_complete"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "End the call naturally and warmly."
+        },
+        "response": "Thanks for chatting with me. Have a great rest of your day!",
+        "edges": []
+      },
+
+      {
+        "name": "Immediate End Call",
+        "id": "node-1736492520068",
+        "type": "end",
+        "intent_triggers": [
+          "deny_site_visit",
+          "call_end"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Politely end the call."
+        },
+        "response": "No problem at all. Take care!",
+        "edges": []
+      },
+
+      {
+        "name": "Fallback Intent",
+        "id": "fallback_intent",
+        "type": "fallback",
+        "intent_triggers": [
+          "unclear_intent"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Clarify whether the user wants to buy, rent, invest, or sell. Ask only this one question."
+        },
+        "response": "Just to clarify, are you looking to buy, rent, invest, or sell a property?",
+        "collects": null,
+        "expected_input_type": "any",
+        "edges": [
+          {
+            "condition": "resume intent question",
+            "id": "edge-fallback-intent-return",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user clearly provides the real estate purpose"
+            },
+            "destination_node_id": "node-1735264921453"
+          }
+        ]
+      },
+
+      {
+        "id": "fallback_location",
+        "name": "Fallback Location",
+        "type": "fallback",
+        "intent_triggers": [
+          "unclear_location"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Ask the user to clarify the preferred location. Do not ask about budget or property type in this fallback."
+        },
+        "response": "Which city or area are you considering?",
+        "collects": null,
+        "expected_input_type": "location",
+        "edges": [
+          {
+            "condition": "resume location question",
+            "id": "edge-fallback-location-return",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user provides a clear location"
+            },
+            "destination_node_id": "node-1767421000001"
+          }
+        ]
+      },
+
+      {
+        "id": "fallback_budget",
+        "name": "Fallback Budget",
+        "type": "fallback",
+        "intent_triggers": [
+          "unclear_budget"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Ask the user to clarify their budget. Do not ask about location or property type in this fallback."
+        },
+        "response": "What budget range should I keep in mind?",
+        "collects": null,
+        "expected_input_type": "budget",
+        "edges": [
+          {
+            "condition": "resume budget question",
+            "id": "edge-fallback-budget-return",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user provides a clear budget"
+            },
+            "destination_node_id": "node-1767421000002"
+          }
+        ]
+      },
+
+      {
+        "id": "fallback_property_type",
+        "name": "Fallback Property Type",
+        "type": "fallback",
+        "intent_triggers": [
+          "unclear_property_type"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Ask the buyer or seller to clarify the property type. Ask only about property type."
+        },
+        "response": "What type of property are you looking for, like a flat, house, or BHK?",
+        "collects": null,
+        "expected_input_type": "any",
+        "edges": [
+          {
+            "condition": "resume property type question",
+            "id": "edge-fallback-property-type-return",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user provides a clear property type"
+            },
+            "destination_node_id": "node-1767421000001"
+          }
+        ]
+      },
+
+      {
+        "id": "fallback_visit_datetime",
+        "name": "Fallback Visit Datetime",
+        "type": "fallback",
+        "intent_triggers": [
+          "unclear_visit_datetime"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Ask for a clear site visit date and time. Ask only about the visit date and time."
+        },
+        "response": "What day and time would work best for the visit?",
+        "collects": null,
+        "expected_input_type": "datetime",
+        "edges": [
+          {
+            "condition": "resume visit time question",
+            "id": "edge-fallback-visit-datetime-return",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user provides a clear visit date or time"
+            },
+            "destination_node_id": "node-1735265015507"
+          }
+        ]
+      },
+
+      {
+        "id": "fallback_callback_time",
+        "name": "Fallback Callback Time",
+        "type": "fallback",
+        "intent_triggers": [
+          "unclear_callback_time"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Ask for a convenient callback date or time. Ask only about callback timing."
+        },
+        "response": "When would be a convenient time for a callback?",
+        "collects": null,
+        "expected_input_type": "datetime",
+        "edges": [
+          {
+            "condition": "resume callback time question",
+            "id": "edge-fallback-callback-time-return",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user provides a clear callback date or time"
+            },
+            "destination_node_id": "node-1736492391269"
+          }
+        ]
+      },
+
+      {
+        "id": "node_fallback",
+        "name": "General Fallback",
+        "type": "fallback",
+        "intent_triggers": [
+          "general_fallback"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Ask one concise clarification related to the user's current real estate requirement. Follow the current conversation stage and do not jump to a different stage."
+        },
+        "response": "Could you tell me a little more about what you're looking for in a property?",
+        "collects": null,
+        "expected_input_type": "any",
+        "edges": [
+          {
+            "condition": "resume conversation",
+            "id": "edge-general-fallback-resume",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "return to the current real estate question"
+            },
+            "destination_node_id": "node-1735264921453"
+          }
+        ]
+      },
+
+      {
+        "id": "node_fallback_budget",
+        "name": "Budget Fallback",
+        "type": "fallback_guided",
+        "intent_triggers": [
+          "budget_uncertain"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Help the user describe their budget range. Ask only about budget."
+        },
+        "response": "Would you say your budget is more budget-friendly, mid-range, or premium?",
+        "collects": "budget_range",
+        "expected_input_type": "any",
+        "edges": []
+      },
+
+      {
+        "id": "node_fallback_location",
+        "name": "Location Suggestion",
+        "type": "fallback_guided",
+        "intent_triggers": [
+          "location_suggestion_requested"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Ask which location the user prefers. Do not claim that any location has availability unless verified."
+        },
+        "response": "Which city or area interests you?",
+        "collects": "location",
+        "expected_input_type": "location",
+        "edges": []
+      },
+
+      {
+        "id": "node_fallback_reschedule",
+        "name": "Reschedule Visit",
+        "type": "fallback_guided",
+        "intent_triggers": [
+          "visit_date_denied",
+          "deny_visit_time"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "Offer another visit date without pressure."
+        },
+        "response": "Would another day work better for the visit?",
+        "collects": "visit_datetime",
+        "expected_input_type": "any",
+        "edges": [
+          {
+            "condition": "alternate date provided",
+            "id": "edge-reschedule-accept",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user provides another date or time"
+            },
+            "destination_node_id": "node-1735265209472"
+          },
+          {
+            "condition": "still refuses",
+            "id": "edge-reschedule-refuse",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "user still refuses or wants to decide later"
+            },
+            "destination_node_id": "node-1736492391269"
+          }
+        ]
+      },
+
+      {
+        "id": "node-wrong-person-end",
+        "name": "Wrong Person End",
+        "type": "end",
+        "intent_triggers": [
+          "deny_identity"
+        ],
+        "instruction": {
+          "type": "prompt",
+          "text": "End politely when speaking to the wrong person."
+        },
+        "response": "No problem. Thanks for your time. Goodbye!",
+        "edges": []
+      }
+    ],
+
+    "components": [],
+
+    "start_node_id": "node-1767592854176",
+    "start_speaker": "agent",
+
+    "tools": [
+      {
+        "tool_id": "tool-1735265013306",
+        "event_type_id": 668000,
+        "cal_api_key": "cal_live_123456",
+        "timezone": "America/Los_Angeles",
+        "name": "check_calendar_availability",
+        "description": "When the user asks for availability, check the calendar and provide available slots.",
+        "type": "check_availability_cal"
+      },
+      {
+        "tool_id": "tool-1735265348523",
+        "event_type_id": 668000,
+        "cal_api_key": "cal_live_12345",
+        "timezone": "America/Los_Angeles",
+        "name": "book_appointment",
+        "description": "When the user asks to book an appointment, book it on the calendar.",
+        "type": "book_appointment_cal"
+      }
+    ],
+
+    "model_choice": {
+      "type": "cascading",
+      "model": "gpt-5.2",
+      "high_priority": false
+    },
+
+    "model_temperature": 0,
+    "tool_call_strict_mode": true,
+    "knowledge_base_ids": [],
+    "kb_config": {
+      "top_k": 3,
+      "filter_score": 0.6
+    },
+    "is_published": false,
+    "flex_mode": true
+  },
+
+  "_comment": "Buyer flow is intentionally sequential: intent -> property type -> location -> budget -> requirement confirmation -> property exploration -> site visit. User language is detected dynamically and the LLM should render each response in English, Hindi, or Hinglish according to the user's latest language and meaning.",
+
+  "tts_provider": "smallest"
+}

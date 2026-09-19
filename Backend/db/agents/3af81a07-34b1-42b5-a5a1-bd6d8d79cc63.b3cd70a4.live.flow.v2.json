@@ -1,0 +1,290 @@
+{
+  "schema_version": "2.0",
+  "id": "flowv2_7d597c9fe53d",
+  "agent_id": "3af81a07-34b1-42b5-a5a1-bd6d8d79cc63",
+  "agent_name": "Indic-Test",
+  "agent_type": "education",
+  "status": "published",
+  "runtime_mode": "live",
+  "default_locale": "en",
+  "supported_locales": [
+    "en",
+    "hi",
+    "mr"
+  ],
+  "start_node_id": "start",
+  "global_prompt": "You are an education counselling voice agent.\n\nPrimary goal:\nUnderstand the student's course interest and connect them with the right counsellor.\n\nConversation style:\nBe encouraging, patient, and clear. Ask one question at a time. Support parents and students without sounding pushy.\n\nDiscovery questions:\n1. Ask which course, program, exam, or career path they are interested in.\n2. Ask current education level.\n3. Ask preferred city, online/offline preference, and timeline.\n4. Ask budget or fee range only if the conversation naturally allows it.\n5. Ask whether a counsellor should call back.\n\nRules:\nDo not guarantee admission, scholarship, visa approval, placement, or exam results.\n\nFinal outcome:\nSummarize the student requirement and confirm the counselling follow-up.\n\nWebsite intelligence source: https://godrejssarjapur.com/godrej-bangalore/.\nVerified business name: Godrej Sarjapur Bangalore.\nRelevant website sections found: contact; home.\nVerified products/services: Master Plan Layout; Unit Plan Layout; Intellectual Property Rights; Property Information Disclaimer.\nWebsite-backed value points: I understand and acknowledge that the project I am interested in hasn't yet secured RERA clearance.; I understand and acknowledge that the project I am interested in hasn't yet secured RERA clearance.; I understand and acknowledge that the project I am interested in hasn't yet secured RERA clearance..\nQualification questions to collect: Which service are you most interested in?; When are you planning to make a decision?.\nObjection guidance: price_concern: Acknowledge budget concern and offer to match options to their range.; needs_time: Offer a short follow-up slot instead of pressuring the caller..\nUse only verified website facts and keep unsupported claims out of the call.",
+  "slots": [
+    {
+      "id": "interested",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "course_interest",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "education_level",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "city",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "budget",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "callback",
+      "required": true,
+      "source": "conversation"
+    }
+  ],
+  "intents": [
+    {
+      "id": "confirm",
+      "examples": [
+        "yes",
+        "okay",
+        "sure"
+      ]
+    },
+    {
+      "id": "deny",
+      "examples": [
+        "no",
+        "not interested"
+      ]
+    },
+    {
+      "id": "unclear",
+      "examples": [
+        "hmm",
+        "repeat"
+      ]
+    },
+    {
+      "id": "provide_info",
+      "examples": [
+        "my budget is 50 lakh"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "label": "Greeting",
+      "response": {
+        "en": "Hello, this is Indic-Test. Am I speaking with {{name}}?"
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "discovery",
+          "label": "Confirm"
+        },
+        {
+          "intent": "deny",
+          "target": "end",
+          "label": "Deny"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback",
+          "label": "Unclear"
+        }
+      ],
+      "collects": []
+    },
+    {
+      "id": "discovery",
+      "type": "slot_collection",
+      "label": "Discovery",
+      "collects": [
+        "interested",
+        "course_interest",
+        "education_level",
+        "city",
+        "budget",
+        "callback"
+      ],
+      "response": {
+        "en": "Could you share a little about what you are looking for?"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "confirm_followup",
+          "label": "Provide Info"
+        },
+        {
+          "intent": "confirm",
+          "target": "confirm_followup",
+          "label": "Confirm"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback",
+          "label": "Unclear"
+        }
+      ]
+    },
+    {
+      "id": "fallback",
+      "type": "fallback",
+      "label": "Clarify",
+      "response": {
+        "en": "Sorry, I did not catch that clearly. Could you repeat it once?"
+      },
+      "fallback": {
+        "max_attempts": 2,
+        "escalation_target": "end"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "discovery",
+          "label": "Provide Info"
+        },
+        {
+          "intent": "confirm",
+          "target": "discovery",
+          "label": "Confirm"
+        },
+        {
+          "intent": "deny",
+          "target": "end",
+          "label": "Deny"
+        }
+      ],
+      "collects": []
+    },
+    {
+      "id": "confirm_followup",
+      "type": "message",
+      "label": "Confirm Follow-up",
+      "response": {
+        "en": "Thanks. I will have the team follow up with the right details."
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "end",
+          "label": "Confirm"
+        },
+        {
+          "intent": "deny",
+          "target": "end",
+          "label": "Deny"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback",
+          "label": "Unclear"
+        }
+      ],
+      "collects": []
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "label": "End",
+      "response": {
+        "en": "Thank you. Have a good day."
+      },
+      "transitions": [],
+      "collects": []
+    }
+  ],
+  "metadata": {
+    "source": "website_intelligence",
+    "source_language": "English",
+    "validation_required": true,
+    "source_url": "https://godrejssarjapur.com/godrej-bangalore/",
+    "industry": "education",
+    "review_required": true,
+    "website_intelligence": {
+      "domain": "godrejssarjapur.com",
+      "source_url": "https://godrejssarjapur.com/godrej-bangalore/",
+      "industry": "education",
+      "advisory_only": true,
+      "auto_publish": false,
+      "quality": {
+        "score": 100,
+        "level": "high",
+        "ready_for_review": true,
+        "warnings": []
+      },
+      "evidence_urls": [
+        "https://godrejssarjapur.com/godrej-bangalore/",
+        "https://godrejssarjapur.com/godrej-bangalore/terms-conditions.html",
+        "https://godrejssarjapur.com/godrej-bangalore/Privacy-Policy.html",
+        "https://godrejssarjapur.com/"
+      ],
+      "content_inventory": {
+        "page_types": {
+          "contact": 1,
+          "legal": 2,
+          "home": 1
+        },
+        "has_services": false,
+        "has_faq": false,
+        "has_contact": true,
+        "noise_filtered": true
+      },
+      "review_checklist": [
+        {
+          "key": "human_review_required",
+          "label": "Human review required before publishing",
+          "passed": true
+        },
+        {
+          "key": "quality_ready_for_review",
+          "label": "Extraction quality is ready for review",
+          "passed": true
+        },
+        {
+          "key": "source_evidence_present",
+          "label": "Website evidence URLs are attached",
+          "passed": true
+        },
+        {
+          "key": "services_detected",
+          "label": "Products or services were detected",
+          "passed": true
+        },
+        {
+          "key": "conversation_guidance_present",
+          "label": "Qualification or objection guidance is present",
+          "passed": true
+        },
+        {
+          "key": "noise_filtered",
+          "label": "Crawler noise filtering was applied",
+          "passed": true
+        }
+      ],
+      "limitations": [
+        "Only public website content fetched within configured crawl limits was used.",
+        "Human review is required before publishing any generated workflow."
+      ]
+    },
+    "applied_from_script_draft_id": "6a738d8b-f71b-4199-b92c-2818b743864b",
+    "live_runtime_unchanged": false,
+    "published_at": "2026-07-01T19:58:08.981826",
+    "published_to": "v1_runtime_schema"
+  },
+  "validation": {
+    "status": "valid",
+    "node_count": 5,
+    "terminal_count": 1
+  },
+  "tts_provider": "edge"
+}

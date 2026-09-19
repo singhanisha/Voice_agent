@@ -1,0 +1,41 @@
+[
+    {
+        "id": "root_greeting",
+        "name": "Initial Greeting",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Greet the patient warmly as Maya and confirm their identity."
+        },
+        "response": "Hello, this is Maya from the Cosmic Clinic. Am I speaking with {{name}}?",
+        "intent_triggers": [
+            "call_connected"
+        ]
+    },
+    {
+        "id": "discovery",
+        "name": "Appointment Discovery",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Ask details about symptoms, preferred appointment time, and preferred doctor."
+        },
+        "response": "Hello! I am calling to schedule your doctor's appointment. Could you let me know what symptoms you are having and your preferred time for the visit?",
+        "collects": [
+            "Symptom",
+            "Preferred Time",
+            "Doctor",
+            "Interested"
+        ]
+    },
+    {
+        "id": "end_node",
+        "name": "Conclusion",
+        "type": "end",
+        "instruction": {
+            "type": "prompt",
+            "text": "Thank the patient, confirm appointment booking details, and end the call."
+        },
+        "response": "Thank you for confirming those details. Your appointment is now scheduled, and we will send the slot details via WhatsApp. Take care and have a healthy day!"
+    }
+]

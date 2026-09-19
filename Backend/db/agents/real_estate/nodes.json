@@ -1,0 +1,470 @@
+[
+    {
+        "instruction": {
+            "type": "prompt",
+            "text": "Greet naturally and warmly. Introduce yourself briefly as Neha from the Real Estate team. Confirm if you're speaking with {{Prashant}} — keep it conversational, not formal."
+        },
+        "name": "Smart Greeting",
+        "start_speaker": "agent",
+        "id": "node-1767592854176",
+        "type": "conversation",
+        "display_position": {
+            "x": -86.59994527922208,
+            "y": 106.01951486442819
+        },
+        "interruption_sensitivity": 0,
+        "intent_triggers": [
+            "call_connected"
+        ],
+        "response": "Hey, this is Neha — I'm with the Real Estate team.Can I talk to you."
+    },
+    {
+        "name": "Availability Check",
+        "id": "node-1735264873079",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Check if they have a moment. Keep it relaxed — mention it's just a quick two minutes and frame it as something relevant to them, not a generic sales call."
+        },
+        "display_position": {
+            "x": 1100,
+            "y": 60
+        },
+        "intent_triggers": [
+            "confirm_identity"
+        ],
+        "response": "Do you have two minutes right now? I came across something that might actually be relevant for you."
+    },
+    {
+        "name": "Ask Intent",
+        "id": "node-1735264921453",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Find out their purpose — buying, renting, or investing. Ask naturally and conversationally, not like a form. One question only."
+        },
+        "display_position": {
+            "x": 1650,
+            "y": 80
+        },
+        "intent_triggers": [
+            "availability_confirmed"
+        ],
+        "response": "Are you currently looking to buy, rent, or invest in a property?",
+        "collects": "intent_value",
+        "expected_input_type": "any"
+    },
+    {
+        "name": "Handle Objection Budget High",
+        "id": "node-objection-budget-high",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Acknowledge the budget concern naturally — one brief line. Don't argue. Reframe gently: mention we have options in Mamurdi or Hinjewadi with flexible plans. Ask if they'd want to hear about those instead."
+        },
+        "display_position": {
+            "x": 1650,
+            "y": 400
+        },
+        "intent_triggers": [
+            "budget_high"
+        ],
+        "response": "Yeah, totally fair — budget matters. We do have some options in Hinjewadi and Mamurdi that are more accessible, with flexible payment plans. Worth a look?"
+    },
+    {
+        "name": "Handle Objection Not Looking",
+        "id": "node-objection-not-looking",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Acknowledge without pushing. Don't argue. Gently reframe: mention pre-launch opportunities that tend to do well as long-term investments. Ask if they'd be open to getting details on WhatsApp for future reference — keep the tone easy and low-pressure."
+        },
+        "display_position": {
+            "x": 1650,
+            "y": -150
+        },
+        "intent_triggers": [
+            "not_looking_now"
+        ],
+        "response": "Got it, no worries. Just so I'm not wasting your time — would it be okay if I sent you something on WhatsApp? You can look at it whenever it suits you."
+    },
+    {
+        "name": "Ask Location and Budget",
+        "id": "node-1735267546732",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Find out their preferred location and budget. Ask in a natural way — one question at a time if possible. Focus on what fits them, not a list of options."
+        },
+        "display_position": {
+            "x": 2719.269057396452,
+            "y": 156.16344682717423
+        },
+        "intent_triggers": [
+            "provide_intent",
+            "provide_location",
+            "provide_budget",
+            "provide_property_type"
+        ],
+        "response": "Which part of the city are you looking at — and roughly what budget should I work with?",
+        "missing_slot_responses": {
+            "location": "Which city or area are you considering?",
+            "budget": "What budget range should I keep in mind?"
+        },
+        "collects": [
+            "location",
+            "budget"
+        ],
+        "expected_input_type": "any"
+    },
+    {
+        "name": "Share Property Details",
+        "id": "node-1736323961832",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Share 1-2 highlights that match what the user cares about — don't dump all the details. Focus on the benefit, not the spec. Then ask if they'd like to see it in person."
+        },
+        "display_position": {
+            "x": 3300,
+            "y": 50
+        },
+        "intent_triggers": [
+            "buyer_requirements_ready"
+        ],
+        "response": "Actually, I have a property in {{location}} that fits your budget well. Would you like to visit it in person?"
+    },
+    {
+        "name": "Site Visit Availability",
+        "id": "node-1735265015507",
+        "type": "function",
+        "tool_id": "tool-1735265013306",
+        "tool_type": "local",
+        "speak_during_execution": true,
+        "wait_for_result": true,
+        "instruction": {
+            "type": "prompt",
+            "text": "Confirm they're coming for a site visit. Ask for a date and time that works for them — keep it flexible and easy for them to commit."
+        },
+        "display_position": {
+            "x": 3850,
+            "y": 80
+        },
+        "intent_triggers": [
+            "confirm_site_visit"
+        ],
+        "response": "What works better for you — weekend or a weekday? And any time preference?",
+        "collects": "timeline",
+        "expected_input_type": "datetime"
+    },
+    {
+        "name": "Save Lead & Confirm",
+        "id": "node-1735265209472",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Confirm the visit naturally — mention you'll drop the location details on WhatsApp. Thank them warmly, not formally."
+        },
+        "display_position": {
+            "x": 4400,
+            "y": 0
+        },
+        "intent_triggers": [
+            "provide_visit_datetime"
+        ],
+        "response": "Done — I'll send you the location and directions on WhatsApp before {{timeline}}. Looking forward to it."
+    },
+    {
+        "name": "Confirm and End",
+        "id": "node-1736492925252",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Wrap up the call naturally — keep it warm and brief. No scripted goodbye."
+        },
+        "display_position": {
+            "x": 4965.433114690977,
+            "y": 143.98942611742885
+        },
+        "intent_triggers": [
+            "visit_saved"
+        ],
+        "response": "All set — see you then. Have a good one!"
+    },
+    {
+        "name": "Callback Scheduling",
+        "id": "node-1736492391269",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "They're not ready right now — don't push. Acknowledge briefly and ask for a good time to call back. Keep it easy and low-pressure."
+        },
+        "display_position": {
+            "x": 2750,
+            "y": 1305
+        },
+        "intent_triggers": [
+            "schedule_callback"
+        ],
+        "response": "No worries. What day and time would be best to catch you?",
+        "collects": [
+            "callback_date",
+            "callback_time"
+        ],
+        "expected_input_type": "datetime"
+    },
+    {
+        "name": "Confirm Callback",
+        "id": "node-1736567518748",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Confirm the callback time casually. Thank them without being overly formal."
+        },
+        "display_position": {
+            "x": 3300,
+            "y": 1305
+        },
+        "intent_triggers": [
+            "provide_timeline"
+        ],
+        "response": "I'll ping you around {{timeline}} then. Take care!"
+    },
+    {
+        "name": "Polite Goodbye",
+        "id": "node-1736492485610",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "End the call naturally — warm and brief, not formal."
+        },
+        "display_position": {
+            "x": 3811.406030364601,
+            "y": 1043.8420229287215
+        },
+        "intent_triggers": [
+            "callback_confirmed"
+        ],
+        "response": "Alright, take care. Talk soon!"
+    },
+    {
+        "name": "Seller Flow Start",
+        "id": "node-1736510533232",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "They want to sell — shift gears smoothly. Ask which area the property is in and what price range they're expecting. Keep it conversational."
+        },
+        "display_position": {
+            "x": 2200,
+            "y": 765
+        },
+        "intent_triggers": [
+            "seller_interest"
+        ],
+        "response": "Sure, I can help with that. Which area is the property in, and what kind of price are you targeting?",
+        "missing_slot_responses": {
+            "location": "Which location is the property in?",
+            "budget": "What price range are you expecting?"
+        },
+        "collects": [
+            "location",
+            "budget"
+        ],
+        "expected_input_type": "any"
+    },
+    {
+        "name": "Seller Property Details",
+        "id": "node-1767420514711",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Ask for a couple more details about the property — type, size, age, anything stand-out. Mention someone from the team will follow up with them."
+        },
+        "display_position": {
+            "x": 2610.338582667696,
+            "y": 663.6094379479788
+        },
+        "intent_triggers": [
+            "seller_requirements_ready"
+        ],
+        "response": "Got it — what type of property is it, roughly how old, and any standout features? I'll have someone from our team reach out with a proper eval.",
+        "collects": "property_type",
+        "expected_input_type": "any"
+    },
+    {
+        "name": "Re-engage User",
+        "id": "node-1735970090937",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "They said they're busy — don't apologize excessively. Acknowledge briefly, mention this is about their previous inquiry, and ask if there's a better time. Keep it light."
+        },
+        "display_position": {
+            "x": 1820.0307848364757,
+            "y": 986.8457189564976
+        },
+        "intent_triggers": [
+            "availability_retry"
+        ],
+        "response": "No worries, I'll be quick — it's about a property inquiry from earlier. Do you have two minutes, or should I call back later?"
+    },
+    {
+        "name": "End Conversation",
+        "id": "node-1735969972303",
+        "type": "end",
+        "instruction": {
+            "type": "prompt",
+            "text": "End the call naturally and warmly. No formal sign-offs."
+        },
+        "display_position": {
+            "x": 5620.0976113152055,
+            "y": 160.16876762669963
+        },
+        "intent_triggers": [
+            "conversation_complete"
+        ],
+        "response": "Thanks for chatting — have a great rest of your day!"
+    },
+    {
+        "name": "Immediate End Call",
+        "id": "node-1736492520068",
+        "type": "end",
+        "instruction": {
+            "type": "prompt",
+            "text": "Politely end the call"
+        },
+        "display_position": {
+            "x": 4400,
+            "y": 1080
+        },
+        "intent_triggers": [
+            "deny_site_visit",
+            "call_end"
+        ],
+        "response": "No problem at all — take care!"
+    },
+    {
+        "id": "fallback_intent",
+        "name": "Fallback Intent",
+        "type": "fallback",
+        "intent_triggers": [
+            "unclear_intent"
+        ],
+        "response": "Sorry, I missed that. Just to clarify, are you looking to buy, rent, or invest in a property?",
+        "collects": null,
+        "expected_input_type": "any"
+    },
+    {
+        "id": "fallback_location",
+        "name": "Fallback Location",
+        "type": "fallback",
+        "intent_triggers": [
+            "unclear_location",
+            "ask_location_suggestion"
+        ],
+        "response": "Sorry, which area was that? Somewhere like Wakad or Baner, or maybe Hinjewadi?",
+        "collects": null,
+        "expected_input_type": "location"
+    },
+    {
+        "id": "fallback_budget",
+        "name": "Fallback Budget",
+        "type": "fallback",
+        "intent_triggers": [
+            "unclear_budget"
+        ],
+        "response": "I didn't get the budget clearly. Are we looking around 50 lakhs, or perhaps closer to 2 crores?",
+        "collects": null,
+        "expected_input_type": "budget"
+    },
+    {
+        "id": "fallback_property_type",
+        "name": "Fallback Property Type",
+        "type": "fallback",
+        "intent_triggers": [
+            "unclear_property_type"
+        ],
+        "response": "Could you repeat the property type? Is it a 2 BHK you're looking for, or something else?",
+        "collects": null,
+        "expected_input_type": "any"
+    },
+    {
+        "id": "fallback_visit_datetime",
+        "name": "Fallback Visit Datetime",
+        "type": "fallback",
+        "intent_triggers": [
+            "unclear_visit_datetime"
+        ],
+        "response": "I'm sorry, I didn't quite catch that! Could you please let me know, what works better for you — weekend or a weekday? And any time preference?",
+        "collects": null,
+        "expected_input_type": "datetime"
+    },
+    {
+        "id": "fallback_callback_time",
+        "name": "Fallback Callback Time",
+        "type": "fallback",
+        "intent_triggers": [
+            "unclear_callback_time"
+        ],
+        "response": "That's alright. When would be a convenient time for a callback?",
+        "collects": null,
+        "expected_input_type": "datetime"
+    },
+    {
+        "id": "node_fallback_budget",
+        "name": "Budget Fallback",
+        "type": "fallback_guided",
+        "intent_triggers": [
+            "budget_uncertain"
+        ],
+        "response": "No problem — are you thinking more budget-friendly, mid-range, or premium?",
+        "collects": "budget_range",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "node_fallback_location",
+        "name": "Location Suggestion",
+        "type": "fallback_guided",
+        "intent_triggers": [
+            "location_suggestion_requested"
+        ],
+        "response": "Popular areas include Wakad, Baner, Hinjewadi, and Kharadi. Which location interests you?",
+        "collects": "location",
+        "expected_input_type": "location"
+    },
+    {
+        "id": "node_fallback_reschedule",
+        "name": "Reschedule Visit",
+        "type": "fallback_guided",
+        "intent_triggers": [
+            "visit_date_denied",
+            "deny_visit_time"
+        ],
+        "response": "Would next week work better for the visit?",
+        "collects": "visit_datetime",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "node-wrong-person-end",
+        "name": "Wrong Person End",
+        "type": "end",
+        "instruction": {
+            "type": "prompt",
+            "text": "End the call politely when speaking to the wrong person"
+        },
+        "intent_triggers": [
+            "deny_identity"
+        ],
+        "response": "Sorry about that. Thank you for your time. Goodbye."
+    },
+    {
+        "id": "node_fallback",
+        "name": "General Fallback",
+        "type": "fallback",
+        "intent_triggers": [],
+        "response": "Could you help me understand what you're looking for?",
+        "collects": null,
+        "expected_input_type": "any"
+    }
+]

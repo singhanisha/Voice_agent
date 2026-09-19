@@ -1,0 +1,64 @@
+{
+  "agent_name": "Integration Test Agent",
+  "voice_id": "ElevenLabs Priya",
+  "conversation_flow_id": "flow_c7f4a83f",
+  "global_prompt": "You are a test agent...",
+  "conversationFlow": {
+    "global_prompt": "You are a test agent...",
+    "start_node_id": "root_greeting",
+    "nodes": [
+      {
+        "id": "root_greeting",
+        "name": "Initial Greeting",
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Greet the user and introduce yourself."
+        },
+        "response": "Hello, I'm calling to speak with you about a new opportunity.",
+        "intent_triggers": [
+          "call_connected"
+        ],
+        "edges": [
+          {
+            "id": "to_discovery",
+            "condition": "user responds",
+            "destination_node_id": "discovery"
+          }
+        ]
+      },
+      {
+        "id": "discovery",
+        "name": "Information Discovery",
+        "type": "conversation",
+        "instruction": {
+          "type": "prompt",
+          "text": "Collect information and answer questions."
+        },
+        "response": "I'd love to share more details. What are your thoughts?",
+        "collects": [
+          "Call Status",
+          "Interested"
+        ],
+        "edges": [
+          {
+            "id": "to_end",
+            "condition": "conversation finished",
+            "destination_node_id": "end_node"
+          }
+        ]
+      },
+      {
+        "id": "end_node",
+        "name": "Conclusion",
+        "type": "end",
+        "instruction": {
+          "type": "prompt",
+          "text": "End the call politely."
+        },
+        "response": "Thank you for your time. Goodbye!"
+      }
+    ]
+  },
+  "tts_provider": "edge"
+}

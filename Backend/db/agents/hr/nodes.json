@@ -1,0 +1,407 @@
+[
+    {
+        "id": "hr_greeting",
+        "name": "Smart Greeting",
+        "type": "conversation",
+        "start_speaker": "agent",
+        "instruction": {
+            "type": "prompt",
+            "text": "Greet naturally and warmly. Introduce yourself briefly as Riya from the HR team. Confirm you are speaking with {{name}}. Keep it conversational, not formal."
+        },
+        "display_position": { "x": 0, "y": 100 },
+        "interruption_sensitivity": 0,
+        "intent_triggers": [
+            "call_connected"
+        ],
+        "response": "Hi, this is Riya from the HR team. Am I speaking with {{name}}?"
+    },
+    {
+        "id": "hr_availability",
+        "name": "Availability Check",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Check if they have a couple of minutes. Frame it as being about their job application or an HR query, not a generic sales call."
+        },
+        "display_position": { "x": 550, "y": 100 },
+        "intent_triggers": [
+            "confirm_identity"
+        ],
+        "response": "Do you have two minutes? It's regarding your application with us."
+    },
+    {
+        "id": "hr_route_intent",
+        "name": "Route Intent",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Find out whether this is about a job application or an HR policy question. Ask naturally, one question only."
+        },
+        "display_position": { "x": 1100, "y": 100 },
+        "intent_triggers": [
+            "availability_confirmed"
+        ],
+        "response": "Is this about your job application, or did you have an HR query I can help with?",
+        "collects": "intent_value",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "screening_experience",
+        "name": "Screening — Experience and Role",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Ask for their total years of experience and their current job title. Ask one at a time if needed. Do not re-ask what they already told you."
+        },
+        "display_position": { "x": 1650, "y": 0 },
+        "intent_triggers": [
+            "job_application",
+            "provide_experience",
+            "provide_current_role"
+        ],
+        "response": "Could you tell me your total experience and what you're doing currently?",
+        "missing_slot_responses": {
+            "experience": "Roughly how many years of experience do you have overall?",
+            "current_role": "And what's your current designation?"
+        },
+        "collects": [
+            "experience",
+            "current_role"
+        ],
+        "expected_input_type": "any"
+    },
+    {
+        "id": "screening_ctc",
+        "name": "Screening — Current and Expected CTC",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Ask for current CTC and expected CTC. Accept rough ranges. Keep it light and non-intrusive. Never promise a specific package."
+        },
+        "display_position": { "x": 2200, "y": 0 },
+        "intent_triggers": [
+            "experience_captured",
+            "provide_ctc"
+        ],
+        "response": "What's your current CTC, and what are you expecting?",
+        "missing_slot_responses": {
+            "current_ctc": "What's your current CTC — a rough figure is fine.",
+            "expected_ctc": "And what's your expectation for the new role?"
+        },
+        "collects": [
+            "current_ctc",
+            "expected_ctc"
+        ],
+        "expected_input_type": "any"
+    },
+    {
+        "id": "screening_notice",
+        "name": "Screening — Notice Period",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Ask about notice period or joining availability. Accept days, weeks, months, or immediate."
+        },
+        "display_position": { "x": 2750, "y": 0 },
+        "intent_triggers": [
+            "ctc_captured",
+            "provide_notice_period"
+        ],
+        "response": "How soon could you join — what's your notice period?",
+        "collects": "notice_period",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "role_details",
+        "name": "Share Role Details",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Briefly describe the role and the interview process in one or two short lines. Then ask if they'd like to move to an interview. Never invent salary numbers or joining bonuses."
+        },
+        "display_position": { "x": 3300, "y": 0 },
+        "intent_triggers": [
+            "notice_captured",
+            "ask_role_details"
+        ],
+        "response": "The role is with our product team, and it's a two-round process. Shall we schedule the first round?"
+    },
+    {
+        "id": "interview_slot",
+        "name": "Interview Scheduling",
+        "type": "function",
+        "tool_id": "tool_schedule_interview",
+        "tool_type": "local",
+        "speak_during_execution": true,
+        "wait_for_result": true,
+        "instruction": {
+            "type": "prompt",
+            "text": "Confirm they want to schedule. Ask for a date and time that suits them. Offer weekday vs weekend first, then morning vs afternoon. Keep it easy to commit to."
+        },
+        "display_position": { "x": 3850, "y": 0 },
+        "intent_triggers": [
+            "confirm_interview"
+        ],
+        "response": "What works better — a weekday or the weekend? And morning or afternoon?",
+        "missing_slot_responses": {
+            "interview_date": "Which day suits you best?",
+            "interview_time": "And what time should I block?"
+        },
+        "collects": [
+            "interview_date",
+            "interview_time"
+        ],
+        "expected_input_type": "datetime"
+    },
+    {
+        "id": "confirm_interview",
+        "name": "Confirm Interview and Send Invite",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Confirm the slot naturally. Mention the calendar invite and meeting link will come by email and WhatsApp. Thank them warmly, not formally."
+        },
+        "display_position": { "x": 4400, "y": 0 },
+        "intent_triggers": [
+            "provide_interview_datetime"
+        ],
+        "response": "Done — I've blocked {{interview_date}} at {{interview_time}}. The invite and link will reach you on email shortly."
+    },
+    {
+        "id": "policy_query",
+        "name": "HR Policy Query",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Ask which HR topic they need help with — leave, payroll, PF, attendance, reimbursement, or documents. Answer only what you actually know. Never invent policy numbers, dates, or amounts."
+        },
+        "display_position": { "x": 1650, "y": 350 },
+        "intent_triggers": [
+            "hr_query",
+            "ask_policy"
+        ],
+        "response": "Sure — is it about leave, payroll, PF, or documents?",
+        "collects": "policy_topic",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "policy_answer",
+        "name": "Answer Policy Question",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Answer the policy question in one or two short lines using only the HR knowledge available to you. If you are not certain, say the HR team will confirm in writing. Then ask if there is anything else."
+        },
+        "display_position": { "x": 2200, "y": 350 },
+        "intent_triggers": [
+            "provide_policy_topic"
+        ],
+        "response": "Got it. Let me help with that — anything else you'd like me to check?"
+    },
+    {
+        "id": "policy_escalate",
+        "name": "Escalate to HR Partner",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "This is a sensitive or unknown topic — a grievance, complaint, exit, or something you cannot confirm. Do NOT counsel or give an opinion. Acknowledge once, say it will be routed confidentially to the HR business partner, and ask for a good time to call back."
+        },
+        "display_position": { "x": 2750, "y": 350 },
+        "intent_triggers": [
+            "sensitive_topic",
+            "unknown_policy"
+        ],
+        "response": "I'd rather our HR partner handle this properly and confidentially. When's a good time for them to call you?",
+        "collects": "callback_time",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "objection_not_interested",
+        "name": "Handle Objection — Not Interested",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Acknowledge without pushing. Do not argue. Offer to keep their profile on file and ask if you may share the JD on WhatsApp for later. Keep it low-pressure."
+        },
+        "display_position": { "x": 1650, "y": -350 },
+        "intent_triggers": [
+            "not_interested"
+        ],
+        "response": "Understood, no problem. Can I share the JD on WhatsApp in case something changes later?"
+    },
+    {
+        "id": "objection_ctc_low",
+        "name": "Handle Objection — Budget or CTC",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Acknowledge the compensation concern in one brief line. Do not argue and do not promise a number. Say the range is flexible for the right fit and ask if they'd still like to explore the first round."
+        },
+        "display_position": { "x": 2200, "y": -350 },
+        "intent_triggers": [
+            "ctc_mismatch"
+        ],
+        "response": "Fair point. The band is flexible for the right fit — worth a first conversation?"
+    },
+    {
+        "id": "callback_scheduling",
+        "name": "Callback Scheduling",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "They are busy or it's a wrong moment. Ask for a convenient day and time to call back. Keep it to one short question."
+        },
+        "display_position": { "x": 550, "y": 400 },
+        "intent_triggers": [
+            "busy",
+            "call_later"
+        ],
+        "response": "No problem at all. When would be a good time to call you back?",
+        "collects": "callback_time",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "confirm_callback",
+        "name": "Confirm Callback",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "Confirm the callback slot warmly in one line and close."
+        },
+        "display_position": { "x": 1100, "y": 400 },
+        "intent_triggers": [
+            "provide_callback_time"
+        ],
+        "response": "Perfect, I'll call you at {{callback_time}}. Thanks for your time."
+    },
+    {
+        "id": "reengage_user",
+        "name": "Re-engage User",
+        "type": "conversation",
+        "instruction": {
+            "type": "prompt",
+            "text": "The user went quiet or gave a very short reply. Re-engage gently with one easy question tied to the last step."
+        },
+        "display_position": { "x": 1100, "y": 700 },
+        "intent_triggers": [
+            "silence",
+            "unclear"
+        ],
+        "response": "Still there? I just need one quick detail and we're done."
+    },
+    {
+        "id": "fallback_intent",
+        "name": "Fallback — Route Intent",
+        "type": "fallback",
+        "intent_triggers": [
+            "unclear_intent"
+        ],
+        "response": "Just to confirm — is this about a job application, or an HR question?",
+        "collects": "intent_value",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "fallback_experience",
+        "name": "Fallback — Experience",
+        "type": "fallback",
+        "intent_triggers": [
+            "unclear_experience"
+        ],
+        "response": "Roughly how many years of work experience do you have in total?",
+        "collects": "experience",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "fallback_ctc",
+        "name": "Fallback — CTC",
+        "type": "fallback_guided",
+        "intent_triggers": [
+            "unclear_ctc",
+            "ctc_uncertain"
+        ],
+        "response": "A rough number is fine — are we talking under 5 LPA, 5 to 15, or above 15?",
+        "collects": "expected_ctc",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "fallback_notice",
+        "name": "Fallback — Notice Period",
+        "type": "fallback_guided",
+        "intent_triggers": [
+            "unclear_notice"
+        ],
+        "response": "Are you an immediate joiner, or is it thirty, sixty, or ninety days?",
+        "collects": "notice_period",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "fallback_interview_slot",
+        "name": "Fallback — Interview Slot",
+        "type": "fallback_guided",
+        "intent_triggers": [
+            "unclear_interview_datetime"
+        ],
+        "response": "Let's keep it simple — weekday or weekend? Then I'll pick a time.",
+        "collects": "interview_date",
+        "expected_input_type": "datetime"
+    },
+    {
+        "id": "fallback_callback_time",
+        "name": "Fallback — Callback Time",
+        "type": "fallback",
+        "intent_triggers": [
+            "unclear_callback_time"
+        ],
+        "response": "Morning or evening works better for a callback?",
+        "collects": "callback_time",
+        "expected_input_type": "any"
+    },
+    {
+        "id": "node_fallback",
+        "name": "General Fallback",
+        "type": "fallback",
+        "intent_triggers": [
+            "unclear"
+        ],
+        "response": "Sorry, could you say that once more?"
+    },
+    {
+        "id": "wrong_person_end",
+        "name": "Wrong Person End",
+        "type": "end",
+        "instruction": {
+            "type": "prompt",
+            "text": "Wrong number or wrong person. Apologise briefly in one line and end the call."
+        },
+        "intent_triggers": [
+            "deny_identity"
+        ],
+        "response": "Apologies for the trouble — have a good day."
+    },
+    {
+        "id": "end_node",
+        "name": "End Conversation",
+        "type": "end",
+        "instruction": {
+            "type": "prompt",
+            "text": "Thank them, confirm the next step in one short line, and close warmly."
+        },
+        "intent_triggers": [
+            "conversation_complete"
+        ],
+        "response": "Thanks for your time. You'll hear from us shortly — have a good day!"
+    },
+    {
+        "id": "polite_goodbye_end",
+        "name": "Polite Goodbye",
+        "type": "end",
+        "instruction": {
+            "type": "prompt",
+            "text": "They declined or want to end. Close politely in one line without pushing."
+        },
+        "intent_triggers": [
+            "deny_interest"
+        ],
+        "response": "No worries at all. Thanks for your time — take care."
+    }
+]

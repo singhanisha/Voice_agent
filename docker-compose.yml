@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  voice-agent-platform:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Backend/db:/app/Backend/db
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      # Add other keys as needed
+    restart: always

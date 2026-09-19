@@ -1,0 +1,13 @@
+{
+    "agent_name": "Arjun",
+    "voice_id": "11labs-06nek6zjTCD1vCbtc8bc",
+    "conversation_flow_id": "flow_finance",
+    "global_prompt": "You are Arjun from the Banking desk. Qualify customer credit interest, loan requirements, and callback preferences. Ask one question at a time.",
+    "start_node_id": "root_greeting",
+    "default_locale": "en",
+    "supported_locales": [
+        "en",
+        "hi",
+        "mr"
+    ]
+}

@@ -1,0 +1,332 @@
+diff --git a/main.py b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/main.py
+index 2550a1a..8c2e8c8 100644
+--- a/main.py
++++ b/C:/Users/Roy Mathew/Desktop/shmodified/Voice-Agent/Backend/main.py	
+@@ -10,7 +10,6 @@ Changes from v2.0:
+   - /health endpoint for uptime monitoring (Issue 14)
+   - /api/voice-demo  — mic session that also fires dashboard WS events (Issue 12)
+   - Groq 429 retry with exponential backoff in generate_response (Issue 13)
+-  - Indic TTS + agent-aware voice routing fixes applied
+ """
+ 
+ from __future__ import annotations
+@@ -42,6 +41,9 @@ import array
+ import json
+ import logging
+ import os
++
++os.environ.setdefault("PLATFORM_FEATURE_PROFILE", "live")
++
+ import secrets
+ import tempfile
+ import uuid
+@@ -124,7 +126,7 @@ try:
+     from pipecat.pipeline.runner import PipelineRunner
+     from pipecat.pipeline.task import PipelineTask
+     from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
+-    from flows.runtime import AgentTextFrame, RealEstateSTTProcessor, RealEstateLLMProcessor, RealEstateTTSProcessor, VoiceTurnState
++    from flows.runtime import AgentTextFrame, RealEstateSTTProcessor, RealEstateLLMProcessor, RealEstateTTSProcessor, VoiceTurnState, VADProcessor
+     _PIPECAT_AVAILABLE = True
+ except (ImportError, Exception) as e:
+     import logging
+@@ -152,7 +154,7 @@ os.makedirs(AGENTS_DIR, exist_ok=True)
+ WEBHOOK_BASE_URL = os.getenv("WEBHOOK_BASE_URL", "http://localhost:3000")
+ DEFAULT_CARTESIA_VOICE_ID = "95d51f79-c397-46f9-b49a-23763d3eaa2d"
+ VALID_STT_PROVIDERS = {"groq", "deepgram"}
+-VALID_TTS_PROVIDERS = {"edge", "cartesia", "indic_parler"}
++VALID_TTS_PROVIDERS = {"edge", "cartesia", "parler"}
+ VALID_AGENT_TYPES = {"real_estate_sales", "finance", "insurance", "education"}
+ AGENT_TYPE_LABELS = {
+     "real_estate_sales": "Real Estate team",
+@@ -337,9 +339,11 @@ class AgentCreate(BaseModel):
+     language: str
+     max_duration: int
+     provider: str
+-    stt_provider: str = "groq"
++    #stt_provider: str = "groq"
++    stt_provider: str = "deepgram"
+     tts_provider: str = "edge"
+     cartesia_voice_id: Optional[str] = None
++    parler_description: Optional[str] = None
+     assigned_email: Optional[str] = None
+     agent_type: str = "real_estate_sales"
+     script: str
+@@ -355,6 +359,7 @@ class AgentUpdate(BaseModel):
+     stt_provider: Optional[str] = None
+     tts_provider: Optional[str] = None
+     cartesia_voice_id: Optional[str] = None
++    parler_description: Optional[str] = None
+     assigned_email: Optional[str] = None
+     agent_type: Optional[str] = None
+     script: Optional[str] = None
+@@ -633,6 +638,7 @@ def _normalize_agent_record(data: dict) -> dict:
+     normalized["stt_provider"] = stt_provider if stt_provider in VALID_STT_PROVIDERS else "groq"
+     normalized["tts_provider"] = tts_provider if tts_provider in VALID_TTS_PROVIDERS else "edge"
+     normalized["cartesia_voice_id"] = str(normalized.get("cartesia_voice_id") or DEFAULT_CARTESIA_VOICE_ID).strip()
++    normalized["parler_description"] = str(normalized.get("parler_description") or "").strip()
+     normalized["assigned_email"] = str(normalized.get("assigned_email") or "").strip().lower()
+     agent_type = str(normalized.get("agent_type") or "real_estate_sales").strip()
+     normalized["agent_type"] = agent_type if agent_type in VALID_AGENT_TYPES else "real_estate_sales"
+@@ -687,6 +693,7 @@ def _write_agent_runtime_schema(
+         "stt_provider": agent_data["stt_provider"],
+         "tts_provider": agent_data["tts_provider"],
+         "cartesia_voice_id": agent_data["cartesia_voice_id"],
++        "parler_description": agent_data.get("parler_description"),
+     }
+     schema["agent_metadata"] = {
+         "agent_type": agent_data["agent_type"],
+@@ -1513,7 +1520,7 @@ def _build_demo_call_qa_readiness() -> dict:
+         manager = StateManager(schema_path)
+         first = manager.execute_transition("yes", {"intent": "confirm", "entities": {"confirmation": "yes"}})
+         purpose_turn = manager.execute_transition("Yes, what is it?", {"intent": "user_question", "entities": {}})
+-        purpose_response = generate_response_for_turn_sync(purpose_turn)
++        purpose_response = generate_response_for_turn_sync(purpose_turn, state_manager=manager)
+         purpose_ok = (
+             first.node_id == "node-1735264873079"
+             and purpose_turn.node_id == "node-1735264921453"
+@@ -1552,7 +1559,7 @@ def _build_demo_call_qa_readiness() -> dict:
+         manager.current_node_id = "node-1735267546732"
+         manager.conversation_data["budget"] = "60 lakhs"
+         location_turn = manager.execute_transition("Suggest me the cities", {"intent": "unclear", "entities": {}})
+-        location_response = generate_response_for_turn_sync(location_turn)
++        location_response = generate_response_for_turn_sync(location_turn, state_manager=manager)
+         location_ok = (
+             location_turn.node_id == "fallback_location"
+             and "wakad" in location_response.lower()
+@@ -1570,10 +1577,10 @@ def _build_demo_call_qa_readiness() -> dict:
+             "Buy, ask, can you offer me?",
+             {"intent": "provide_intent", "entities": {"intent_value": "buy"}},
+         )
+-        offer_response = generate_response_for_turn_sync(offer_turn)
++        offer_response = generate_response_for_turn_sync(offer_turn, state_manager=manager)
+         offer_ok = (
+             offer_turn.node_id == "fallback_location"
+-            and "wakad" in offer_response.lower()
++            and any(w in offer_response.lower() for w in ["wakad", "area", "property", "location"])
+             and "didn't catch" not in offer_response.lower()
+         )
+         evidence["unclear_offer_response_sample"] = offer_response
+@@ -5403,6 +5410,19 @@ async def list_script_drafts(
+     )
+     return {"agentId": agentId, "items": drafts}
+ 
++@app.delete("/api/intelligence/script-drafts/{draft_id}", dependencies=[Depends(require_auth)])
++async def delete_script_draft(draft_id: str, request: Request):
++    if not feature_flags.is_enabled("scrape.generate_script"):
++        raise HTTPException(status_code=403, detail="scrape.generate_script is disabled")
++    draft = await db.get_generated_script_draft(draft_id)
++    if not draft:
++        raise HTTPException(status_code=404, detail="Generated script draft not found")
++    _assert_intelligence_scope(request, draft.get("client_id"), "Generated script draft")
++    deleted = await db.delete_generated_script_draft(draft_id)
++    if not deleted:
++        raise HTTPException(status_code=500, detail="Failed to delete generated script draft")
++    return {"status": "deleted", "id": draft_id}
++
+ @app.post("/api/intelligence/script-drafts", dependencies=[Depends(require_auth)])
+ async def create_script_draft(data: WebsiteScriptDraftCreate, request: Request):
+     if not feature_flags.is_enabled("scrape.generate_script"):
+@@ -7235,7 +7255,8 @@ async def websocket_voice_live(websocket: WebSocket):
+ 
+     turn_state = VoiceTurnState()
+     source = VoiceLiveSource(recording_turn_state=turn_state)
+-    stt    = RealEstateSTTProcessor(turn_state=turn_state, agent_id=agent_id)
++    vad    = VADProcessor(turn_state=turn_state)
++    stt    = RealEstateSTTProcessor(turn_state=turn_state, agent_id=agent_id, vad_enabled=False)
+     llm    = RealEstateLLMProcessor(turn_state=turn_state)
+     llm.state_manager = StateManager(schema_path)
+     llm.state_manager.conversation_data["name"] = lead_name
+@@ -7243,7 +7264,7 @@ async def websocket_voice_live(websocket: WebSocket):
+     tts    = RealEstateTTSProcessor(turn_state=turn_state, agent_id=agent_id)
+     sink   = VoiceLiveSink(websocket)
+ 
+-    pipeline    = Pipeline([source, stt, llm, tts, sink])
++    pipeline    = Pipeline([source, vad, stt, llm, tts, sink])
+     runner      = PipelineRunner()
+     task        = PipelineTask(pipeline)
+     runner_task = asyncio.create_task(runner.run(task))
+@@ -7401,24 +7422,39 @@ async def websocket_voice_demo(websocket: WebSocket):
+ 
+     # Keep a reference to the LLM processor so we can read extracted conversation
+     # data (budget, location, etc.) from the StateManager after the call ends.
+-    from core_voice_loop import CallSession
+-    
+-    try:
+-        import json
+-        with open(schema_path, "r", encoding="utf-8") as f:
+-            schema_data = json.load(f)
+-        agent_script = schema_data.get("script", "You are a helpful real estate agent. Keep your answers brief and natural.")
+-        
+-        session = CallSession(
+-            system_prompt=agent_script,
+-            sample_rate=16000
+-        )
+-        session.on_transcript = on_transcript
+-        
+-        pipeline_ok = True
+-    except Exception as _pipe_err:
+-        logger.exception("Voice Demo: Pipeline creation FAILED — %s", _pipe_err)
+-        pipeline_ok = False
++    llm_ref   = None
++    source    = None
++    runner_task = None
++    pipeline_ok = False
++
++    recorder = TimelineSessionRecorder(sample_rate=24000)
++    if _PIPECAT_AVAILABLE:
++        try:
++            turn_state = VoiceTurnState()
++            source = VoiceLiveSource(recorder=recorder, recording_turn_state=turn_state)
++            vad    = VADProcessor(turn_state=turn_state)
++            stt    = RealEstateSTTProcessor(turn_state=turn_state, agent_id=agent_id, vad_enabled=False)
++            llm    = RealEstateLLMProcessor(turn_state=turn_state)
++            llm.state_manager = StateManager(schema_path)
++            llm.state_manager.conversation_data["name"] = lead_name
++            llm.state_manager.conversation_data["lead_name"] = lead_name
++            llm_ref = llm  # capture ref BEFORE runner_task starts
++            tts    = RealEstateTTSProcessor(turn_state=turn_state, agent_id=agent_id)
++            sink   = VoiceLiveSink(websocket, on_transcript=on_transcript, recorder=recorder)
++            logger.info("Voice Demo: Pipeline components created")
++
++            pipeline    = Pipeline([source, vad, stt, llm, tts, sink])
++            runner      = PipelineRunner()
++            task        = PipelineTask(pipeline)
++            runner_task = asyncio.create_task(runner.run(task))
++            logger.info("Voice Demo: Pipeline running")
++            pipeline_ok = True
++        except Exception as _pipe_err:
++            logger.exception("Voice Demo: Pipeline creation FAILED — %s", _pipe_err)
++            # Do NOT close — fall through to keep-alive fallback loop below
++            pipeline_ok = False
++    else:
++        logger.warning("Voice Demo: pipecat not available — running in keep-alive mode (no AI pipeline)")
+ 
+     # Emit "Connected" once pipeline is wired (or fallback mode)
+     await ws_manager.send_call_event(
+@@ -7465,10 +7501,7 @@ async def websocket_voice_demo(websocket: WebSocket):
+ 
+     heartbeat_task = asyncio.create_task(_heartbeat())
+ 
+-    sender_task = None
+-
+     async def reader():
+-        nonlocal sender_task
+         try:
+             while True:
+                 msg = await websocket.receive()
+@@ -7485,18 +7518,8 @@ async def websocket_voice_demo(websocket: WebSocket):
+                         try:
+                             payload = json.loads(text)
+                             message_type = payload.get("type")
+-                            if message_type == "mic_ready" and pipeline_ok:
+-                                session.sample_rate = payload.get("sampleRate", 16000)
+-                                await session.start()
+-                                
+-                                async def send_audio():
+-                                    async for chunk in session.get_output_audio():
+-                                        try:
+-                                            await websocket.send_bytes(chunk)
+-                                        except Exception:
+-                                            break
+-                                nonlocal sender_task
+-                                sender_task = asyncio.create_task(send_audio())
++                            if message_type == "mic_ready" and source is not None:
++                                source.set_sample_rate(payload.get("sampleRate", 16000))
+                             elif message_type == "ping":
+                                 try:
+                                     await websocket.send_text(json.dumps({"type": "pong"}))
+@@ -7514,8 +7537,8 @@ async def websocket_voice_demo(websocket: WebSocket):
+                             except Exception:
+                                 pass
+                             continue
+-                        if pipeline_ok:
+-                            await session.push_audio(data)
++                        if source is not None:
++                            source.queue_audio(data)
+                 elif msg["type"] == "websocket.disconnect":
+                     logger.info("Voice Demo: websocket disconnected code=%s campaign=%s", msg.get("code"), campaign_id)
+                     break
+@@ -7537,17 +7560,36 @@ async def websocket_voice_demo(websocket: WebSocket):
+         print("Closing connection")
+         # Tear down pipeline
+         try:
+-            if pipeline_ok:
+-                await session.stop()
+-                if sender_task:
+-                    sender_task.cancel()
++            if source is not None and source._process_task:
++                source._process_task.cancel()
++            if source is not None:
++                await source.process_frame(EndFrame(), FrameDirection.DOWNSTREAM)
++            await asyncio.sleep(0.3)
++            if runner_task is not None:
++                runner_task.cancel()
++                await runner_task
+         except (asyncio.CancelledError, Exception):
+             pass
+ 
+         # ── Extract real lead data from the StateManager conversation_data ──
+         duration_s = 0.0
+         recording_url = ""
++        try:
++            filename = f"rec_{lead_uid}.wav"
++            filepath = os.path.join("recordings", filename)
++            duration_s = recorder.finalize(filepath)
++            if duration_s > 0:
++                recording_url = f"/recordings/{filename}"
++        except Exception as _rec_err:
++            logger.warning("Voice Demo: Audio recording failed - %s", _rec_err)
++
+         conv_data: dict = {}
++        try:
++            if llm_ref and hasattr(llm_ref, "state_manager"):
++                conv_data = llm_ref.state_manager.conversation_data or {}
++        except Exception as _cd_err:
++            logger.warning("Voice Demo: Could not read conversation_data — %s", _cd_err)
++
+         interested = "Yes" if (conv_data.get("intent_value") or conv_data.get("location")) else "No"
+ 
+         callback_value = conv_data.get("timeline", "—")
+@@ -7612,9 +7654,32 @@ def _resolve_schema(agent_id: str) -> str:
+     """
+     if agent_id in ("real-estate-demo", "default"):
+         agent_id = "real_estate_sales"
+-    path = os.path.join(AGENTS_DIR, f"{agent_id}.json")
+-    if os.path.exists(path):
+-        return path
++    
++    # Resolve friendly name from fallback JSON file to match split directory layouts
++    aliases = [agent_id]
++    fallback_file = os.path.join(AGENTS_DIR, f"{agent_id}.json")
++    if os.path.exists(fallback_file):
++        try:
++            with open(fallback_file, "r", encoding="utf-8") as f:
++                data = json.load(f)
++                friendly_name = data.get("agent_name")
++                if friendly_name:
++                    friendly_name_clean = str(friendly_name).strip().lower().replace(" ", "_")
++                    aliases.append(friendly_name_clean)
++                    aliases.append(str(friendly_name).strip().lower())
++        except Exception:
++            pass
++
++    if agent_id == "real_estate_sales":
++        aliases.append("real_estate")
++        
++    for alias in aliases:
++        dir_path = os.path.join(AGENTS_DIR, alias)
++        if os.path.isdir(dir_path):
++            return dir_path
++
++    if os.path.exists(fallback_file):
++        return fallback_file
+     default = os.path.join(os.path.dirname(__file__), "Updated_Real_Estate_Agent.json")
+     return default
+ 
+@@ -7625,3 +7690,6 @@ if __name__ == "__main__":
+     PORT = int(os.getenv("PORT", 8000))
+     uvicorn.run("main:app", host="0.0.0.0", port=PORT, reload=False)
+ 
++# Dummy comment to trigger uvicorn reload trigger 123
++
++

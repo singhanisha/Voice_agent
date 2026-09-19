@@ -1,0 +1,3 @@
+@echo off
+echo Starting Voice Agent Backend in Dev Mode...
+".\.venv\Scripts\uvicorn" main:app --reload

@@ -1,0 +1,37 @@
+[
+    {
+        "id": "confirm",
+        "examples": [
+            "yes",
+            "yeah",
+            "yep",
+            "sure",
+            "correct",
+            "haan",
+            "han",
+            "ho",
+            "ji",
+            "theek hai"
+        ]
+    },
+    {
+        "id": "deny",
+        "examples": [
+            "no",
+            "nope",
+            "nah",
+            "nahi",
+            "nai",
+            "nako"
+        ]
+    },
+    {
+        "id": "provide_info",
+        "examples": [
+            "computer science",
+            "MBA",
+            "next month",
+            "online classes"
+        ]
+    }
+]

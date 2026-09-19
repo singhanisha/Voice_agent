@@ -1,0 +1,64 @@
+[
+    {
+        "id": "confirm",
+        "examples": [
+            "yes",
+            "yeah",
+            "yep",
+            "sure",
+            "correct",
+            "haan",
+            "han",
+            "ho",
+            "ji",
+            "theek hai"
+        ]
+    },
+    {
+        "id": "deny",
+        "examples": [
+            "no",
+            "nope",
+            "nah",
+            "nahi",
+            "nai",
+            "nako"
+        ]
+    },
+    {
+        "id": "deny_identity",
+        "examples": [
+            "wrong number",
+            "wrong person",
+            "not Prashant",
+            "this is not him"
+        ]
+    },
+    {
+        "id": "deny_interest",
+        "examples": [
+            "not interested",
+            "not looking",
+            "no requirement",
+            "dont need"
+        ]
+    },
+    {
+        "id": "deny_time",
+        "examples": [
+            "busy",
+            "call later",
+            "not now",
+            "in a meeting",
+            "driving"
+        ]
+    },
+    {
+        "id": "provide_info",
+        "examples": [
+            "my budget is 50 lakh",
+            "looking in Wakad",
+            "want to buy a 2 BHK"
+        ]
+    }
+]

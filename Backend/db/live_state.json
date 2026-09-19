@@ -1,0 +1,560 @@
+{
+    "test_1776186160835_+91 00000 12345": {
+        "campaignId": "test_1776186160835",
+        "name": "Test User",
+        "status": "Completed",
+        "snippet": "Call ended",
+        "transcripts": [
+            {
+                "role": "assistant",
+                "content": "Hello, this is Neha from the Real Estate AI team. Am I speaking with Prashant?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, this is Test User."
+            },
+            {
+                "role": "assistant",
+                "content": "Is this a good time for a quick two-minute call about a property option?"
+            },
+            {
+                "role": "user",
+                "content": "Yeah, I have a moment."
+            },
+            {
+                "role": "assistant",
+                "content": "Are you looking to buy, rent, or invest in a property?"
+            },
+            {
+                "role": "user",
+                "content": "I'm looking to buy a property."
+            },
+            {
+                "role": "assistant",
+                "content": "Which location are you considering, and what budget range should I keep in mind?"
+            },
+            {
+                "role": "user",
+                "content": "I'm interested in Hinjewadi within 80 lakhs budget."
+            },
+            {
+                "role": "assistant",
+                "content": "I have a few options in Hinjewadi around 80 lakhs. Would you like to schedule a site visit."
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            }
+        ],
+        "lastUpdate": "2026-04-14T22:33:01.881697"
+    },
+    "camp_1776191885617_+91 98200 12345": {
+        "campaignId": "camp_1776191885617",
+        "name": "Rahul Sharma",
+        "status": "Completed",
+        "snippet": "Call ended",
+        "transcripts": [
+            {
+                "role": "assistant",
+                "content": "Hello, this is Neha from the Real Estate AI team. Am I speaking with Prashant?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, this is Rahul Sharma."
+            },
+            {
+                "role": "assistant",
+                "content": "Is this a good time for a quick two-minute call about a property option?"
+            },
+            {
+                "role": "user",
+                "content": "Yeah, I have a moment."
+            },
+            {
+                "role": "assistant",
+                "content": "Are you looking to buy, rent, or invest in a property?"
+            },
+            {
+                "role": "user",
+                "content": "I'm looking to buy a property."
+            },
+            {
+                "role": "assistant",
+                "content": "Which location are you considering, and what budget range should I keep in mind?"
+            },
+            {
+                "role": "user",
+                "content": "I'm interested in Kharadi within 80 lakhs budget."
+            },
+            {
+                "role": "assistant",
+                "content": "I have a few options in Kharadi around 80 lakhs. Would you like to schedule a site visit."
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            }
+        ],
+        "lastUpdate": "2026-04-15T00:08:25.244375"
+    },
+    "camp_1776191885617_+91 99870 54321": {
+        "campaignId": "camp_1776191885617",
+        "name": "Priya Mehta",
+        "status": "Completed",
+        "snippet": "Call ended",
+        "transcripts": [
+            {
+                "role": "assistant",
+                "content": "Hello, this is Neha from the Real Estate AI team. Am I speaking with Prashant?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, this is Priya Mehta."
+            },
+            {
+                "role": "assistant",
+                "content": "Is this a good time for a quick two-minute call about a property option?"
+            },
+            {
+                "role": "user",
+                "content": "Yeah, I have a moment."
+            },
+            {
+                "role": "assistant",
+                "content": "Are you looking to buy, rent, or invest in a property?"
+            },
+            {
+                "role": "user",
+                "content": "I'm looking to buy a property."
+            },
+            {
+                "role": "assistant",
+                "content": "Which location are you considering, and what budget range should I keep in mind?"
+            },
+            {
+                "role": "user",
+                "content": "I'm interested in Baner within 80 lakhs budget."
+            },
+            {
+                "role": "assistant",
+                "content": "I have a few options in Baner around 80 lakhs. Would you like to schedule a site visit."
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            }
+        ],
+        "lastUpdate": "2026-04-15T00:08:45.167338"
+    },
+    "camp_1776191885617_+91 91234 56789": {
+        "campaignId": "camp_1776191885617",
+        "name": "Suresh Nair",
+        "status": "Completed",
+        "snippet": "Call ended",
+        "transcripts": [
+            {
+                "role": "assistant",
+                "content": "Hello, this is Neha from the Real Estate AI team. Am I speaking with Prashant?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, this is Suresh Nair."
+            },
+            {
+                "role": "assistant",
+                "content": "Is this a good time for a quick two-minute call about a property option?"
+            },
+            {
+                "role": "user",
+                "content": "Yeah, I have a moment."
+            },
+            {
+                "role": "assistant",
+                "content": "Are you looking to buy, rent, or invest in a property?"
+            },
+            {
+                "role": "user",
+                "content": "I'm looking to buy a property."
+            },
+            {
+                "role": "assistant",
+                "content": "Which location are you considering, and what budget range should I keep in mind?"
+            },
+            {
+                "role": "user",
+                "content": "I'm interested in Hinjewadi within 80 lakhs budget."
+            },
+            {
+                "role": "assistant",
+                "content": "I have a few options in Hinjewadi around 80 lakhs. Would you like to schedule a site visit."
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            }
+        ],
+        "lastUpdate": "2026-04-15T00:09:39.068033"
+    },
+    "camp_1776191885617_+91 88888 77777": {
+        "campaignId": "camp_1776191885617",
+        "name": "Anita Desai",
+        "status": "Completed",
+        "snippet": "Call ended",
+        "transcripts": [
+            {
+                "role": "assistant",
+                "content": "Hello, this is Neha from the Real Estate AI team. Am I speaking with Prashant?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, this is Anita Desai."
+            },
+            {
+                "role": "assistant",
+                "content": "Is this a good time for a quick two-minute call about a property option?"
+            },
+            {
+                "role": "user",
+                "content": "Yeah, I have a moment."
+            },
+            {
+                "role": "assistant",
+                "content": "Are you looking to buy, rent, or invest in a property?"
+            },
+            {
+                "role": "user",
+                "content": "I'm looking to buy a property."
+            },
+            {
+                "role": "assistant",
+                "content": "Which location are you considering, and what budget range should I keep in mind?"
+            },
+            {
+                "role": "user",
+                "content": "I'm interested in Kharadi within 80 lakhs budget."
+            },
+            {
+                "role": "assistant",
+                "content": "I have a few options in Kharadi around 80 lakhs. Would you like to schedule a site visit."
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            }
+        ],
+        "lastUpdate": "2026-04-15T00:10:36.617773"
+    },
+    "camp_1776191885617_+91 77777 66666": {
+        "campaignId": "camp_1776191885617",
+        "name": "Manoj Pillai",
+        "status": "Completed",
+        "snippet": "Call ended",
+        "transcripts": [
+            {
+                "role": "assistant",
+                "content": "Hello, this is Neha from the Real Estate AI team. Am I speaking with Prashant?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, this is Manoj Pillai."
+            },
+            {
+                "role": "assistant",
+                "content": "Is this a good time for a quick two-minute call about a property option?"
+            },
+            {
+                "role": "user",
+                "content": "Yeah, I have a moment."
+            },
+            {
+                "role": "assistant",
+                "content": "Are you looking to buy, rent, or invest in a property?"
+            },
+            {
+                "role": "user",
+                "content": "I'm looking to buy a property."
+            },
+            {
+                "role": "assistant",
+                "content": "Which location are you considering, and what budget range should I keep in mind?"
+            },
+            {
+                "role": "user",
+                "content": "I'm interested in Baner within 80 lakhs budget."
+            },
+            {
+                "role": "assistant",
+                "content": "I have a few options in Baner around 80 lakhs. Would you like to schedule a site visit."
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            },
+            {
+                "role": "user",
+                "content": "Yes, I can visit this Sunday."
+            },
+            {
+                "role": "assistant",
+                "content": "Just to confirm \u2014 Sure, what date and time would suit you for the site visit?"
+            }
+        ],
+        "lastUpdate": "2026-04-15T00:11:35.633959"
+    }
+}
