@@ -31,6 +31,23 @@ class ExtractedEntities(BaseModel):
     contact_validated: Optional[bool] = Field(None, description="whether contact details are validated")
     user_name: Optional[str] = Field(None, description="user's first name if they introduce themselves, e.g. 'Roy'")
 
+    # --- generic fields used by HR / Finance / Insurance domains ---
+    experience: Optional[str] = Field(None, description="e.g. '4 years', 'fresher'")
+    current_role: Optional[str] = Field(None, description="current job title")
+    current_ctc: Optional[str] = Field(None, description="e.g. '8 LPA'")
+    expected_ctc: Optional[str] = Field(None, description="e.g. '12 LPA'")
+    notice_period: Optional[str] = Field(None, description="e.g. '30 days', 'immediate'")
+    interview_date: Optional[str] = Field(None)
+    interview_time: Optional[str] = Field(None)
+    policy_topic: Optional[str] = Field(None, description="leave, payroll, pf, documents")
+    callback_time: Optional[str] = Field(None)
+    product_interest: Optional[str] = Field(None, description="loan, credit card, insurance, investment")
+    income_range: Optional[str] = Field(None)
+    loan_amount: Optional[str] = Field(None)
+    policy_type: Optional[str] = Field(None, description="health, life, motor, business")
+    renewal_date: Optional[str] = Field(None)
+    coverage_need: Optional[str] = Field(None)
+
 class IntentAnalysis(BaseModel):
     intent: str = Field(
         ...,
@@ -75,6 +92,153 @@ Respond ONLY with a valid JSON object matching this schema:
 Do not return markdown, ticks, or text explanations.
 """
 
+# ── Domain-aware intent classification ────────────────────────────────
+# Instead of hardcoding one prompt per domain, we build the prompt
+# straight from that domain's own db/agents/<domain>/intents.json
+# (id + examples). This makes any new domain (HR, Finance, Insurance,
+# future ones) work automatically as long as its intents.json exists —
+# no code change needed here again.
+import functools
+
+_LLM_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+_AGENTS_DIR_FOR_INTENTS = os.path.join(os.path.dirname(_LLM_FILE_DIR), "db", "agents")
+
+
+@functools.lru_cache(maxsize=16)
+def _build_domain_intent_prompt(domain: str) -> str:
+    intents_path = os.path.join(_AGENTS_DIR_FOR_INTENTS, domain, "intents.json")
+    if not domain or not os.path.isfile(intents_path):
+        return INTENT_EXTRACTION_PROMPT  # fallback: real estate prompt
+
+    try:
+        with open(intents_path, "r", encoding="utf-8") as fh:
+            intents = json.load(fh)
+    except Exception:
+        return INTENT_EXTRACTION_PROMPT
+
+    lines = [
+        "You are an expert intent classifier and slot extractor for a phone conversation.",
+        "Analyze the user's latest message and the conversation history (any language:",
+        "English, Hindi, or Hinglish — classify by MEANING, not exact keywords).",
+        "Map it to exactly ONE of these intent ids. Use the id EXACTLY as written below:",
+        "",
+    ]
+    for item in intents:
+        iid = item.get("id", "")
+        examples = ", ".join(f'"{e}"' for e in (item.get("examples") or [])[:6])
+        if iid:
+            lines.append(f"- {iid}  (examples: {examples})")
+
+    lines += [
+        "",
+        "Also extract any of these entities when present in the message (null if absent):",
+        "intent_value, budget_range, preferred_bhk, location, timeline_weeks, contact_validated,",
+        "experience, current_role, current_ctc, expected_ctc, notice_period, interview_date,",
+        "interview_time, policy_topic, callback_time, product_interest, income_range,",
+        "loan_amount, policy_type, renewal_date, coverage_need, user_name",
+        "",
+        "Respond ONLY with a valid JSON object:",
+        '{"intent": "<one id from the list above>", "confidence_score": 0.0-1.0, "entities": {...}}',
+        "No markdown, no explanation, no extra text.",
+    ]
+    return "\n".join(lines)
+
+
+def _collect_schema_intents(schema: dict) -> list[dict]:
+    """
+    Build an intents-style list [{"id":..., "examples":[...]}] straight from
+    an agent's OWN generated schema, so a custom / prompt-generated agent
+    (no separate db/agents/<type>/intents.json) still gets a classifier
+    tuned to its OWN vocabulary instead of the generic real-estate one.
+
+    Two schema styles are supported:
+      A) Hand-authored style (hr/finance/real_estate): nodes carry an
+         explicit "intent_triggers" list; edge "condition" text becomes a
+         natural-language example for that id.
+      B) LLM flow-generator style (agent_flow_generator.py output): nodes
+         have NO intent_triggers at all — routing is purely by each edge's
+         "condition" text. Here we turn the condition phrase itself into a
+         pseudo intent id (spaces -> underscores) so the classifier's
+         output substring-matches back against that same condition text at
+         runtime (state_manager._edge_condition_matches_intent already does
+         a direct substring check for exactly this case).
+    """
+    flow = (schema or {}).get("conversationFlow") or schema or {}
+    nodes = flow.get("nodes") or []
+    nodes_by_id = {n.get("id"): n for n in nodes if isinstance(n, dict)}
+
+    examples_by_intent: dict[str, set] = {}
+
+    for node in nodes:
+        for trig in (node.get("intent_triggers") or []):
+            trig = str(trig).strip()
+            if trig and trig != "call_connected":
+                examples_by_intent.setdefault(trig, set())
+
+    for node in nodes:
+        for edge in (node.get("edges") or []):
+            cond = str(edge.get("condition") or "").strip()
+            if not cond:
+                continue
+            dest = nodes_by_id.get(edge.get("destination_node_id"))
+            dest_triggers = [str(t).strip() for t in ((dest.get("intent_triggers") or []) if dest else []) if str(t).strip()]
+
+            if dest_triggers:
+                for trig in dest_triggers:
+                    if trig != "call_connected":
+                        examples_by_intent.setdefault(trig, set()).add(cond)
+            else:
+                pseudo_id = re.sub(r"[^a-z0-9]+", "_", cond.lower()).strip("_")
+                if pseudo_id:
+                    examples_by_intent.setdefault(pseudo_id, set()).add(cond)
+
+    return [
+        {"id": tid, "examples": sorted(examples)[:6] or [tid.replace("_", " ")]}
+        for tid, examples in examples_by_intent.items()
+        if tid
+    ]
+
+
+def _build_schema_intent_prompt(schema: dict) -> Optional[str]:
+    """
+    Same style/output contract as _build_domain_intent_prompt, but the
+    intent vocabulary is derived live from the agent's own schema instead
+    of a shared db/agents/<domain>/intents.json file. Returns None when the
+    schema doesn't have enough of its own intent vocabulary to be useful,
+    so the caller can fall back further.
+    """
+    intents = _collect_schema_intents(schema)
+    if len(intents) < 2:
+        return None
+
+    lines = [
+        "You are an expert intent classifier and slot extractor for a phone conversation.",
+        "Analyze the user's latest message and the conversation history (any language:",
+        "English, Hindi, or Hinglish — classify by MEANING, not exact keywords).",
+        "Map it to exactly ONE of these intent ids, taken from THIS agent's own",
+        "conversation flow. Use the id EXACTLY as written below:",
+        "",
+    ]
+    for item in intents:
+        examples = ", ".join(f'"{e}"' for e in item["examples"]) or "(no examples yet)"
+        lines.append(f"- {item['id']}  (examples: {examples})")
+
+    lines += [
+        "",
+        "If the user's message doesn't clearly match any id above, respond with \"unclear\".",
+        "Also extract any of these entities when present in the message (null if absent):",
+        "intent_value, budget_range, preferred_bhk, location, timeline_weeks, contact_validated,",
+        "experience, current_role, current_ctc, expected_ctc, notice_period, interview_date,",
+        "interview_time, policy_topic, callback_time, product_interest, income_range,",
+        "loan_amount, policy_type, renewal_date, coverage_need, user_name",
+        "",
+        "Respond ONLY with a valid JSON object:",
+        '{"intent": "<one id from the list above, or \\"unclear\\">", "confidence_score": 0.0-1.0, "entities": {...}}',
+        "No markdown, no explanation, no extra text.",
+    ]
+    return "\n".join(lines)
+
+
 """ async def analyze_user_intent(user_input: str, history: List[Dict[str, str]]) -> IntentAnalysis:
 
     Queries Groq using : str = "openai/gpt-oss-20b" to classify intent and extract slots.
@@ -109,18 +273,43 @@ Do not return markdown, ticks, or text explanations.
             entities=ExtractedEntities()
         ) """
 
-async def analyze_user_intent(user_text: str, conversation_context: str = "") -> IntentAnalysis:
+async def analyze_user_intent(
+    user_text: str,
+    conversation_context: str = "",
+    domain: str = "real_estate",
+    schema: dict | None = None,
+) -> IntentAnalysis:
     """
     Analyze the user's intent and extract entities.
 
-    Uses normal Groq completion instead of strict JSON mode because
-    the currently configured Groq model may reject response_format=json_object.
+    Prompt priority:
+      1. A shared db/agents/<domain>/intents.json, if one exists.
+      2. Intents derived live from THIS agent's own generated schema.
+      3. The generic real-estate classifier, as the final fallback.
     """
+    intents_path = (
+        os.path.join(_AGENTS_DIR_FOR_INTENTS, domain, "intents.json") if domain else ""
+    )
+
+    base_prompt = None
+    if intents_path and os.path.isfile(intents_path):
+        base_prompt = _build_domain_intent_prompt(domain)
+
+    schema_prompt = (schema and _build_schema_intent_prompt(schema)) or None
+
+    if base_prompt and schema_prompt:
+        system_prompt = (
+            base_prompt
+            + "\n\nAlso consider these agent-specific intents:\n"
+            + schema_prompt
+        )
+    else:
+        system_prompt = base_prompt or schema_prompt or INTENT_EXTRACTION_PROMPT
 
     messages = [
         {
             "role": "system",
-            "content": INTENT_EXTRACTION_PROMPT
+            "content": system_prompt
         },
         {
             "role": "user",

@@ -142,22 +142,28 @@ def is_llm_node(node: dict[str, Any]) -> bool:
     """
     Decide whether this node can use LLM response generation.
 
-    Any node with explicit LLM registration, collects fields, or fallback
-    behavior is considered eligible.
+    IMPORTANT: this used to be an opt-IN whitelist of specific real_estate
+    node IDs (_LLM_RESPONSE_NODES), which meant every custom / prompt-
+    generated agent (HR, Finance, a support bot, anything the flow
+    generator built) had completely different node IDs and so NEVER
+    qualified — every one of their replies fell straight to the rigid
+    static template + a hardcoded real-estate phrase bank, regardless of
+    what the caller actually said or which language they used.
+
+    Flipped to an opt-OUT model instead: every node gets a real,
+    context-aware LLM-generated reply by default. _TEMPLATE_ONLY_NODES
+    keeps the real-estate flow's specifically hand-tuned canned lines
+    static (no regression there); everything else — any agent, any
+    domain — now actually understands the caller and answers on-topic,
+    in whichever language (English/Hindi/Hinglish) they're speaking.
     """
 
     node_id = str(node.get("id") or "")
 
-    if node_id in _LLM_RESPONSE_NODES:
-        return True
+    if node_id in _TEMPLATE_ONLY_NODES:
+        return False
 
-    if node.get("collects"):
-        return True
-
-    if node.get("type") in {"fallback", "fallback_guided"}:
-        return True
-
-    return False
+    return True
 
 
 # =============================================================================
@@ -2250,12 +2256,12 @@ def _get_anti_repeat_nudge(
         return f"Could you share your {slot}?"
 
     if language == "hi":
-        return "क्या आप इसके बारे में थोड़ा और जानना चाहेंगे?"
+        return "माफ़ कीजिए, आप फिर से बता सकते हैं?"
 
     if language == "hinglish":
-        return "Kya aap iske baare mein thoda aur jaana chahoge?"
+        return "Sorry, aap ek baar phir se bata sakte hain?"
 
-    return "Would you like to know more?"
+    return node.get("response") or "Sorry, could you say that again?"
 
 
 # =============================================================================

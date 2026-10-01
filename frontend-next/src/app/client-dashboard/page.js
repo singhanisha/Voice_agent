@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
+import MyAgentsPanel from '@/components/MyAgentsPanel';
 import { useAuth, clientProfile } from '@/context/AuthContext';
 import { getProviderLabel } from '@/lib/providerDisplay';
 
@@ -113,6 +114,7 @@ export default function ClientDashboard() {
   
   const availableAgents = clientAssignment?.agents || [];
   const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [activeSection, setActiveSection] = useState('overview');
 
   const activeAgent = useMemo(() => {
     if (selectedAgentId) return availableAgents.find(a => a.id === selectedAgentId) || null;
@@ -572,6 +574,32 @@ export default function ClientDashboard() {
         </div>
       )}
 
+      {/* SECTION TABS */}
+      <ul className="nav nav-tabs mb-4">
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeSection === 'overview' ? 'active fw-semibold' : ''}`}
+            onClick={() => setActiveSection('overview')}
+            type="button"
+          >
+            Overview
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeSection === 'myagent' ? 'active fw-semibold' : ''}`}
+            onClick={() => setActiveSection('myagent')}
+            type="button"
+          >
+            My Agent
+          </button>
+        </li>
+      </ul>
+
+      {activeSection === 'myagent' ? (
+        <MyAgentsPanel user={user} />
+      ) : (
+      <>
       {/* ONBOARDING BANNER */}
       {isNewClient && (
         <div className="alert border-0 shadow-sm p-4 mb-4 rounded-3 text-white" style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>
@@ -1120,6 +1148,8 @@ export default function ClientDashboard() {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
     </DashboardLayout>
   );

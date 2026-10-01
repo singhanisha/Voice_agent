@@ -219,12 +219,13 @@ WEBHOOK_BASE_URL = os.getenv("WEBHOOK_BASE_URL", "http://localhost:3000")
 DEFAULT_CARTESIA_VOICE_ID = "95d51f79-c397-46f9-b49a-23763d3eaa2d"
 VALID_STT_PROVIDERS = {"groq", "deepgram", "indic_seamless", "smallest"}
 VALID_TTS_PROVIDERS = {"edge", "cartesia", "parler", "indic_parler", "sarvam", "smallest", "magpie"}
-VALID_AGENT_TYPES = {"real_estate_sales", "finance", "insurance", "education"}
+VALID_AGENT_TYPES = {"real_estate_sales", "finance", "insurance", "education","hr"}
 AGENT_TYPE_LABELS = {
     "real_estate_sales": "Real Estate team",
     "finance": "Finance advisory team",
     "insurance": "Insurance advisory team",
     "education": "Education counselling team",
+    "hr":"HR team",
 }
 VOICE_MAP = {"ElevenLabs - Priya (Female)": "11labs-06nek6zjTCD1vCbtc8bc"}
 
@@ -436,6 +437,12 @@ class AgentUpdate(BaseModel):
     script: Optional[str] = None
     data_fields: Optional[List[str]] = None
     custom_json: Optional[dict] = None
+
+class AgentFlowGenerateRequest(BaseModel):
+    prompt: str
+    agent_name: Optional[str] = None
+    agent_type: Optional[str] = "recruitment"
+    data_fields: Optional[List[str]] = None
 
 class LeadsUpload(BaseModel):
     campaignId: str
@@ -731,27 +738,57 @@ def _agent_schema_path(agent_id: str, existing_path: str | None = None) -> str:
     return expected_path
 
 
-def _write_agent_runtime_schema(
+async def _write_agent_runtime_schema(
     agent_id: str,
     schema_path: str,
     agent_data: dict,
     voice_id: str,
     assigned_client: Optional[dict],
 ) -> None:
-    try:
-        if agent_data.get("custom_json") and isinstance(agent_data["custom_json"], dict):
-            schema = agent_data["custom_json"]
-        else:
+    schema = None
+
+    # 1. Caller already supplied a full generated flow (the "Generate from
+    #    Prompt" path calls /api/agents/generate-flow first, then submits
+    #    the result here as custom_json).
+    if agent_data.get("custom_json") and isinstance(agent_data["custom_json"], dict):
+        schema = agent_data["custom_json"]
+    else:
+        # 2. Editing an existing agent that already has a real schema on
+        #    disk — keep its current node graph, just update metadata below.
+        try:
             with open(schema_path, "r", encoding="utf-8") as existing_file:
-                schema = json.load(existing_file)
-    except (OSError, json.JSONDecodeError):
-        schema = StateManager.template_new_agent(
-            name=agent_data["name"],
-            script=agent_data["script"],
-            voice_id=voice_id,
-            data_fields=agent_data["data_fields"],
-            agent_type=agent_data["agent_type"],
-        )
+                existing_schema = json.load(existing_file)
+            if _is_usable_agent_schema(schema_path):
+                schema = existing_schema
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    if schema is None:
+        # 3. "Manual Setup" creation (or first save with no prior schema):
+        #    generate a real, multi-node conversation from the agent's
+        #    prompt/script the same way "Generate from Prompt" does, so a
+        #    manually-created agent is just as functional as a prompt-
+        #    generated one — not a bare 2-node skeleton.
+        try:
+            from llm.agent_flow_generator import generate_agent_flow, FlowGenerationError
+            schema, _warnings = await generate_agent_flow(
+                prompt=agent_data["script"],
+                agent_name=agent_data["name"],
+                agent_type=agent_data["agent_type"],
+                data_fields=agent_data["data_fields"],
+            )
+        except Exception as exc:
+            logger.warning(
+                "[SCHEMA] Rich flow generation failed for agent_id=%s (%s) — "
+                "falling back to minimal template.", agent_id, exc,
+            )
+            schema = StateManager.template_new_agent(
+                name=agent_data["name"],
+                script=agent_data["script"],
+                voice_id=voice_id,
+                data_fields=agent_data["data_fields"],
+                agent_type=agent_data["agent_type"],
+            )
 
     if not isinstance(schema, dict):
         schema = {}
@@ -4842,6 +4879,26 @@ async def get_agent(agent_id: str):
         raise HTTPException(status_code=404, detail="Agent not found")
     return agent
 
+@app.get("/api/agents/{agent_id}/runtime-schema", dependencies=[Depends(require_auth)])
+async def get_agent_runtime_schema(agent_id: str, request: Request):
+    """Return the exact conversation JSON (nodes, global_prompt, voice...) the
+    live agent runs on, so the client Agent Studio can view/edit it."""
+    agent = await db.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    _assert_intelligence_scope(request, agent.get("client_id"), "Agent")
+    schema_path = _agent_schema_path(agent_id, agent.get("schema_path"))
+    if not os.path.isfile(schema_path):
+        raise HTTPException(status_code=404, detail="Agent schema file not found")
+    try:
+        with open(schema_path, "r", encoding="utf-8") as fh:
+            schema = json.load(fh)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=500, detail=f"Could not read agent schema: {exc}")
+    return {"schema": schema, "agent": agent}
+ 
+
+
 @app.get("/api/clients/resolve")
 async def resolve_client_by_email(email: str):
     client = await db.get_client_by_email(email)
@@ -4915,7 +4972,7 @@ async def create_agent(agent: AgentCreate):
         assigned_client = await db.ensure_client_for_email(assigned_email)
 
     schema_path = os.path.join(AGENTS_DIR, f"{agent_id}.json")
-    _write_agent_runtime_schema(agent_id, schema_path, data, voice_id, assigned_client)
+    await _write_agent_runtime_schema(agent_id, schema_path, data, voice_id, assigned_client)
     flow_v2_shadow = _write_agent_flow_v2_shadow(agent_id, schema_path, data, assigned_client)
     data.update({
         "client_id": assigned_client.get("id") if assigned_client else None,
@@ -4938,6 +4995,41 @@ async def create_agent(agent: AgentCreate):
     return created
 
 
+@app.post("/api/agents/generate-flow", dependencies=[Depends(require_auth)])
+async def generate_agent_flow_endpoint(request: AgentFlowGenerateRequest):
+    """
+    Generate a full conversation-flow JSON from a plain-language prompt —
+    the "Create Agent from prompt" feature. This does NOT create an agent;
+    it returns a draft flow for the caller to preview before submitting
+    it to POST /api/agents as `custom_json`.
+    """
+    from llm.agent_flow_generator import generate_agent_flow, FlowGenerationError
+
+    if not request.prompt or not request.prompt.strip():
+        raise HTTPException(status_code=400, detail="prompt is required")
+
+    try:
+        flow_json, warnings = await generate_agent_flow(
+            prompt=request.prompt,
+            agent_name=request.agent_name,
+            agent_type=request.agent_type,
+            data_fields=request.data_fields,
+        )
+    except FlowGenerationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Could not generate a valid flow: {exc}",
+        )
+
+    return {
+        "flow": flow_json,
+        "warnings": warnings,
+        "node_count": len(
+            flow_json.get("conversationFlow", {}).get("nodes", [])
+        ),
+    }
+
+
 @app.put("/api/agents/{agent_id}", dependencies=[Depends(require_auth)])
 async def update_agent(agent_id: str, agent: AgentUpdate):
     existing = await db.get_agent(agent_id)
@@ -4954,7 +5046,7 @@ async def update_agent(agent_id: str, agent: AgentUpdate):
         assigned_client = await db.ensure_client_for_email(merged["assigned_email"])
 
     schema_path = _agent_schema_path(agent_id, existing.get("schema_path"))
-    _write_agent_runtime_schema(agent_id, schema_path, merged, voice_id, assigned_client)
+    await _write_agent_runtime_schema(agent_id, schema_path, merged, voice_id, assigned_client)
     flow_v2_shadow = _write_agent_flow_v2_shadow(agent_id, schema_path, merged, assigned_client)
     merged.update({
         "client_id": assigned_client.get("id") if assigned_client else None,
@@ -7545,10 +7637,7 @@ async def websocket_voice_live(websocket: WebSocket):
 
     # IMPORTANT:
     # Real-estate voice agent must always use the canonical 29-node schema.
-    if agent_id in ("default", "real-estate-demo", "real_estate_sales", "real_estate"):
-        schema_path = os.path.join(AGENTS_DIR, "real_estate")
-    else:
-        schema_path = _resolve_schema(agent_id)
+    schema_path = _resolve_schema(agent_id)
 
     _audit_ws_connection(websocket, "/api/voice-live", client_id)
     logger.info(
@@ -7575,7 +7664,7 @@ async def websocket_voice_live(websocket: WebSocket):
     llm.state_manager.conversation_data["name"] = lead_name
     llm.state_manager.conversation_data["lead_name"] = lead_name
     llm.history.clear()  """  
-    llm = RealEstateLLMProcessor(turn_state=turn_state)
+    llm = RealEstateLLMProcessor(turn_state=turn_state,  schema_path=schema_path)
 
     # Use the canonical StateManager created by RealEstateLLMProcessor.
     # Do NOT replace it with the split directory schema.
@@ -7668,10 +7757,7 @@ async def websocket_voice_demo(websocket: WebSocket):
 
     # IMPORTANT:
     # Real-estate voice agent must always use the canonical 29-node schema.
-    if agent_id in ("default", "real-estate-demo", "real_estate_sales", "real_estate"):
-        schema_path = os.path.join(AGENTS_DIR, "real_estate")
-    else:
-        schema_path = _resolve_schema(agent_id)
+    schema_path = _resolve_schema(agent_id)
     _audit_ws_connection(websocket, "/api/voice-demo", client_id)
     campaign_id = f"demo_mic_{uuid.uuid4().hex[:8]}"
     lead_uid    = f"{campaign_id}_demo"
@@ -7771,7 +7857,7 @@ async def websocket_voice_demo(websocket: WebSocket):
             llm.state_manager.conversation_data["lead_name"] = lead_name
             llm.history.clear()
             llm_ref = llm """  # capture ref BEFORE runner_task starts
-            llm = RealEstateLLMProcessor(turn_state=turn_state)
+            llm = RealEstateLLMProcessor(turn_state=turn_state, schema_path=schema_path)
 
             # Use the canonical StateManager initialized by RealEstateLLMProcessor.
             llm.state_manager.reset_state()
@@ -7990,26 +8076,102 @@ async def websocket_voice_demo(websocket: WebSocket):
 
 
 # ── Helper ────────────────────────────────────────────────────────────────────
+# Shared "rich" domain templates (built by hand or upgraded over time) used
+# ONLY as a safety net when an agent has no usable schema of its own yet
+# (e.g. very old agents created before the generator existed).
+DOMAIN_SCHEMA_MAP = {
+    "hr": "hr",
+    "hr_agent": "hr",
+    "hr-demo": "hr",
+    "recruitment": "hr",
+    "real_estate": "real_estate",
+    "real_estate_sales": "real_estate",
+    "real-estate-demo": "real_estate",
+    "finance": "finance",
+    "insurance": "insurance",
+    "education": "education.json",
+
+    "default": "real_estate",
+}
+
+
+def _agent_type_from_db(agent_id: str) -> str | None:
+    """Agent UUID se uska agent_type nikalo (sqlite se, sync)."""
+    import sqlite3
+    try:
+        conn = sqlite3.connect(os.path.join(DB_DIR, "platform.db"), timeout=5)
+        try:
+            row = conn.execute(
+                "SELECT agent_type FROM agents WHERE id=?", (agent_id,)
+            ).fetchone()
+            return row[0] if row and row[0] else None
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.warning("[SCHEMA] DB lookup failed for %s: %s", agent_id, exc)
+        return None
+
+
+def _is_usable_agent_schema(path: str) -> bool:
+    """
+    A per-agent schema file (db/agents/{agent_id}.json) is "usable" only if
+    it actually has a real conversation in it — more than the bare
+    root_greeting/discovery skeleton that used to be written when nothing
+    else was available. This stops us from trusting an empty/corrupt file.
+    """
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            schema = json.load(fh)
+        nodes = (schema.get("conversationFlow") or {}).get("nodes") or []
+        start_id = (schema.get("conversationFlow") or {}).get("start_node_id")
+        node_ids = {n.get("id") for n in nodes if isinstance(n, dict)}
+        return bool(nodes) and start_id in node_ids
+    except Exception:
+        return False
+
+
 def _resolve_schema(agent_id: str) -> str:
     """
-    Resolve the conversation state-machine schema.
-
-    The browser/client agentId is a configured agent UUID and should
-    not determine which conversation-flow schema is used.
-
-    All Real Estate voice conversations use the canonical 29-node
-    Real Estate schema.
+    Priority order:
+      1. The agent's OWN generated schema file (db/agents/{agent_id}.json).
+         Both "Manual Setup" and "Generate from Prompt" agent creation write
+         a complete, agent-specific conversation flow here — this is always
+         the most correct source for that particular agent, regardless of
+         which creation path was used.
+      2. A shared domain template folder (hr / finance / insurance /
+         real_estate) keyed off agent_type — used only as a safety net for
+         agents that predate the per-agent generator, or whose own file is
+         missing/corrupt.
+      3. real_estate, as the final fallback (legacy behaviour).
     """
+    key = str(agent_id or "").strip().lower()
 
+    # 1. Agent's own per-agent schema file — highest priority.
+    own_schema = os.path.join(AGENTS_DIR, f"{agent_id}.json")
+    if os.path.isfile(own_schema) and _is_usable_agent_schema(own_schema):
+        logger.info("[SCHEMA] agent_id=%s -> own generated schema %s", agent_id, own_schema)
+        return own_schema
+
+    # 2. Domain alias / agent_type -> shared template.
+    folder = DOMAIN_SCHEMA_MAP.get(key)
+    agent_type = None
+    if not folder:
+        agent_type = _agent_type_from_db(agent_id)
+        if agent_type:
+            folder = DOMAIN_SCHEMA_MAP.get(agent_type.strip().lower())
+            logger.info("[SCHEMA] agent_id=%s -> agent_type=%s", agent_id, agent_type)
+
+    if not folder:
+        folder = "real_estate"
+
+    schema_path = os.path.join(AGENTS_DIR, folder)
+    if os.path.isdir(schema_path) or os.path.isfile(schema_path):
+        logger.info("[SCHEMA] agent_id=%s -> shared template %s", agent_id, schema_path)
+        return schema_path
+
+    logger.error("[SCHEMA] %s missing, falling back to real_estate", schema_path)
     schema_path = os.path.join(AGENTS_DIR, "real_estate")
-
-    logger.info(
-        "[SCHEMA] Using canonical Real Estate schema | "
-        "agent_id=%s | schema=%s",
-        agent_id,
-        schema_path,
-    )
-
+    logger.info("[SCHEMA] agent_id=%s -> %s", agent_id, schema_path)
     return schema_path
 
 # ── Entry Point ───────────────────────────────────────────────────────────────

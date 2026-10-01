@@ -158,7 +158,96 @@ Do not guarantee admission, scholarship, visa approval, placement, or exam resul
 
 Final outcome:
 Summarize the student requirement and confirm the counselling follow-up.`
+  },
+  jiotv: {
+  label: 'JioTV Customer Support',
+  fields: 'issue_type, device, login_issue, playback_issue, channel_query, subscription_query, callback',
+  prompt: `You are a JioTV customer support voice agent.
+
+Primary goal:
+Understand the customer's JioTV issue and provide simple basic troubleshooting or connect them with the appropriate support team.
+
+Conversation style:
+Be friendly, patient, and professional. Ask one question at a time. Keep responses short and natural for a voice conversation. Do not sound robotic or pushy.
+
+Discovery questions:
+1. Ask what issue the customer is facing with JioTV.
+2. Ask whether the issue is related to login, OTP, app, playback, buffering, audio/video quality, channel, or subscription.
+3. Ask which device they are using when relevant.
+4. For playback or buffering issues, ask whether the problem occurs on all channels or only a specific channel.
+5. For login issues, ask whether the customer is receiving the OTP.
+6. Provide simple troubleshooting steps based on the issue.
+7. Ask whether the customer needs further assistance or a support callback.
+
+Rules:
+Do not ask the customer to share their OTP, password, PIN, or other sensitive credentials.
+Do not claim to have access to the customer's account unless account information is explicitly available through an authorized system.
+Do not invent channel numbers, channel availability, subscription prices, plans, offers, or account details.
+Do not guarantee that an issue will be resolved.
+If exact or current information is unavailable, ask the customer to check the latest information through official JioTV/Jio support.
+Do not provide too many troubleshooting steps at once.
+Do not repeat questions that the customer has already answered.
+
+Final outcome:
+Summarize the customer's issue, confirm the troubleshooting provided, and if required confirm that the customer would like further assistance or a support callback.`
+},
+
+
+    hr: {
+    label: 'HR & Recruitment',
+    fields: 'interested, experience, current_role, current_ctc, expected_ctc, notice_period, interview_date, interview_time, policy_topic, callback',
+    prompt: `You are Riya, an HR executive at a growing technology company. You are speaking with a candidate who applied for a role, or with an employee who has an HR question.
+
+## Who You Are
+You are NOT a bot. You are a warm, organised HR professional who respects people's time and privacy.
+
+## How You Speak
+- Sound like a friendly, competent human on a phone call.
+- Keep every response short and natural.
+- Make a brief acknowledgement BEFORE asking your next question. Never fire questions back to back.
+- Mirror the candidate's language — Hindi, Hinglish, or English.
+- If they volunteer information, acknowledge it and never ask again.
+
+## Your Goal (candidate screening)
+1. Confirm identity and that they have two minutes
+2. Total years of experience and current designation
+3. Current CTC and expected CTC (rough ranges are fine)
+4. Notice period or joining availability
+5. Brief role context, then schedule the first interview round
+6. Confirm a concrete date and time, and mention the calendar invite
+
+## Your Goal (employee HR query)
+Identify the topic — leave, payroll, PF, attendance, reimbursement, or documents — and answer only what you actually know.
+
+## Compliance Rules — NEVER break these
+- Never promise a salary, offer, increment, appraisal rating, or joining bonus
+- Never invent a policy number, leave balance, salary date, or PF amount
+- Never discuss another employee's salary, performance, or personal details
+- Never give legal, medical, or tax advice
+- Never ask for Aadhaar, PAN, bank details, OTP, or passwords on a call
+- For grievances, harassment, conflict, resignation or termination: do NOT counsel. Acknowledge once, say it will be routed confidentially to the HR business partner, and offer a callback
+
+## Handling Objections
+If not looking for a change:
+"Completely understand — can I share the JD on WhatsApp in case something changes later?"
+
+If the package feels low:
+"Fair point. The band is flexible for the right fit — would a first conversation still be worth it?"
+
+If busy:
+"Of course, I'll be quick. Or I can call back — what time works?"
+
+## Closing
+Summarise in one line, confirm the next step, and close warmly.
+
+## Core Rules
+- One question at a time. Always.
+- React to what they said before moving on.
+- Never sound like a form.
+- Never repeat a question they already answered.`
   }
+  
+
 };
 
 const DEFAULT_AGENT_TYPE = 'real_estate_sales';
@@ -194,6 +283,10 @@ const CARTESIA_FEMALE_VOICES = [
     value: '6ccbfb76-1fc6-48f7-b71d-91ac6298247b'
   }
 ];
+
+// UI: do buttons "Manual Setup" / "Generate from Prompt" jo createMode set karein
+
+
 const DEFAULT_CARTESIA_VOICE_ID = CARTESIA_FEMALE_VOICES[0].value;
 
 const SMALLEST_FEMALE_VOICES = [
@@ -310,9 +403,15 @@ const makeInitialFormData = (overrides = {}) => ({
 
 const formDataFromAgent = (agent) => {
   const agentType = agent.agent_type || DEFAULT_AGENT_TYPE;
-  const template = AGENT_TYPE_TEMPLATES[agentType] || AGENT_TYPE_TEMPLATES[DEFAULT_AGENT_TYPE];
+  const template = AGENT_TYPE_TEMPLATES[agentType];
+  const savedFlow = agent.custom_json || agent.generated_flow || null;
+  const flowPrompt = savedFlow?.conversationFlow?.global_prompt || savedFlow?.global_prompt || '';
 
-  // Extract speaker name if stored as Magpie-Multilingual.HI-IN.Sofia
+  const savedScript = agent.script || flowPrompt || (template?.prompt || '');
+  const savedFields = Array.isArray(agent.data_fields)
+    ? agent.data_fields.join(', ')
+    : (agent.data_fields || template?.fields || '');
+
   let initialMagpieSpeaker = DEFAULT_MAGPIE_VOICE;
   if (agent.tts_provider === 'magpie' && agent.voice) {
     const parts = agent.voice.split('.');
@@ -329,15 +428,14 @@ const formDataFromAgent = (agent) => {
     tts_provider: agent.tts_provider || 'edge',
     cartesia_voice_id: agent.cartesia_voice_id || DEFAULT_CARTESIA_VOICE_ID,
     smallest_voice: agent.smallest_voice || DEFAULT_SMALLEST_VOICE,
-    magpie_speaker: initialMagpieSpeaker, // <--- ADD THIS
+    magpie_speaker: initialMagpieSpeaker,
     assigned_email: agent.assigned_email || '',
     agent_type: agentType,
-    script: agent.script || template.prompt,
-    data_fields: Array.isArray(agent.data_fields) ? agent.data_fields.join(', ') : agent.data_fields || template.fields,
-    custom_json: null
+    script: savedScript,
+    data_fields: savedFields,
+    custom_json: savedFlow
   });
 };
-
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -471,6 +569,14 @@ export default function AgentsPage() {
   
   const [formData, setFormData] = useState(makeInitialFormData);
 
+  // Generate-from-prompt state
+  const [createMode, setCreateMode] = useState('manual'); // 'manual' | 'generate'
+  const [generatePrompt, setGeneratePrompt] = useState('');
+  const [generatedFlow, setGeneratedFlow] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState(null);
+  const [showGeneratePreview, setShowGeneratePreview] = useState(false);
+
   const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const fetchAgents = async () => {
@@ -501,13 +607,35 @@ export default function AgentsPage() {
     setModalMode('create');
     setEditingAgentId(null);
     setFormData(makeInitialFormData());
+    setCreateMode('manual');          // NEW — har baar manual se shuru
+    setGeneratePrompt('');
+    setGeneratedFlow(null);
+    setGenerateError(null);
     setShowModal(true);
   };
 
-  const openEditModal = (agent) => {
+  const openEditModal = async (agent) => {
     setModalMode('edit');
     setEditingAgentId(agent.id);
-    setFormData(formDataFromAgent(agent));
+    setCreateMode('manual');
+    setGeneratedFlow(null);
+    setGeneratePrompt('');
+    setGenerateError(null);
+    setShowGeneratePreview(false);
+
+    try {
+      const res = await fetch(`${API}/api/agents/${agent.id}`);
+      if (res.ok) {
+        const fullAgent = await res.json();
+        setFormData(formDataFromAgent(fullAgent));
+      } else {
+        setFormData(formDataFromAgent(agent));
+      }
+    } catch (err) {
+      console.error('Failed to load full agent for editing', err);
+      setFormData(formDataFromAgent(agent));
+    }
+
     setShowModal(true);
   };
 
@@ -873,8 +1001,9 @@ export default function AgentsPage() {
         closeModal();
         setFormData(makeInitialFormData({
           agent_type: formData.agent_type,
-          script: AGENT_TYPE_TEMPLATES[formData.agent_type]?.prompt || AGENT_TYPE_TEMPLATES[DEFAULT_AGENT_TYPE].prompt,
-          data_fields: AGENT_TYPE_TEMPLATES[formData.agent_type]?.fields || AGENT_TYPE_TEMPLATES[DEFAULT_AGENT_TYPE].fields
+          script: AGENT_TYPE_TEMPLATES[formData.agent_type]?.prompt || '',
+          data_fields: AGENT_TYPE_TEMPLATES[formData.agent_type]?.fields || '',
+          custom_json: null
         }));
         fetchAgents();
       } else {
@@ -907,13 +1036,88 @@ export default function AgentsPage() {
   };
 
   const handleAgentTypeChange = (agentType) => {
-    const template = AGENT_TYPE_TEMPLATES[agentType] || AGENT_TYPE_TEMPLATES[DEFAULT_AGENT_TYPE];
-    setFormData({
+    const template = AGENT_TYPE_TEMPLATES[agentType];
+    const isFreshManualCreate = modalMode === 'create' && createMode !== 'generate';
+      if (template) {
+        setFormData(prev => ({
+          ...prev,
+          agent_type: agentType,
+          script: template.prompt,
+          data_fields: template.fields,
+          custom_json: null          
+        }));
+        return;
+      }
+
+    setFormData(prev => ({
+      ...prev,
+      agent_type: agentType
+    }));
+  };
+
+    const handleGenerateFlow = async () => {
+    setGenerating(true);
+    setGenerateError(null);
+    try {
+      const res = await fetch(`${API}/api/agents/generate-flow`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: generatePrompt,
+          agent_name: formData.name || null,
+          agent_type: formData.agent_type || 'recruitment',
+          data_fields: formData.data_fields
+            ? formData.data_fields.split(',').map(s => s.trim()).filter(Boolean)
+            : null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Generation failed');
+      }
+      const { flow } = await res.json();
+      setGeneratedFlow(flow);
+      setShowGeneratePreview(true);   // NEW — preview kholo
+    } catch (e) {
+      setGenerateError(e.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleApproveGeneratedFlow = async () => {
+    if (!generatedFlow) return;
+    const payload = {
       ...formData,
-      agent_type: agentType,
-      script: template.prompt,
-      data_fields: template.fields
-    });
+      name: formData.name || generatedFlow.agent_name || 'Generated Agent',
+      script: generatedFlow.conversationFlow?.global_prompt || formData.script,
+      data_fields: formData.data_fields
+        ? formData.data_fields.split(',').map(s => s.trim()).filter(Boolean)
+        : [],
+      // Clients don't see the "Assign to User Email" field (manual-only) —
+      // isolate the agent to their own account automatically.
+      assigned_email: formData.assigned_email || (user?.role !== 'admin' ? user?.email : '') || '',
+      custom_json: generatedFlow,
+    };
+    try {
+      const res = await fetch(`${API}/api/agents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        closeModal();
+        setGeneratedFlow(null);
+        setGeneratePrompt('');
+        setShowGeneratePreview(false);
+        fetchAgents();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setGenerateError(err.detail || 'Failed to create agent from generated flow');
+      }
+    } catch (e) {
+      setGenerateError('Error connecting to backend');
+    }
   };
 
   return (
@@ -1731,16 +1935,192 @@ export default function AgentsPage() {
               </div>
               <div className="modal-body" style={{ padding: '24px 32px' }}>
                 <form onSubmit={handleSubmit}>
+                  {modalMode === 'create' && (
+                  <div className="d-flex gap-2 mb-4">
+                    {user?.role === 'admin' && (
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${createMode === 'manual' ? 'btn-light' : 'btn-outline-secondary'}`}
+                      onClick={() => setCreateMode('manual')}
+                    >
+                      Manual Setup
+                    </button>
+                    )}
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${createMode === 'generate' ? 'btn-light' : 'btn-outline-secondary'}`}
+                      onClick={() => {
+                        setCreateMode('generate');
+                        // Generate-from-Prompt agents default to Smallest AI
+                        // (fastest latency, best Hindi/Hinglish support).
+                        if (formData.tts_provider !== 'smallest') {
+                          setFormData({ ...formData, tts_provider: 'smallest', smallest_voice: formData.smallest_voice || DEFAULT_SMALLEST_VOICE, voice: formData.smallest_voice || DEFAULT_SMALLEST_VOICE });
+                        }
+                      }}
+                    >
+                      ✨ Generate from Prompt
+                    </button>
+                  </div>
+                )}
+
+                {/* Non-admin (client) users only ever get the prompt-based
+                    creation flow — the Manual Setup form/button is hidden
+                    for them above, and this forces the panel too, in case
+                    createMode state was left as 'manual' from a previous
+                    session. */}
+                {((modalMode === 'create' && user?.role !== 'admin') || createMode === 'generate') ? (
+                  <div>
+                    <div className="row g-3 mb-3">
+                      <div className="col-md-6">
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#E5E5E5', marginBottom: '6px' }}>Agent Type</label>
+                        <input
+                          list="agent-type-options-generate"
+                          type="text"
+                          style={{ width: '100%', background: '#1E1E1E', border: '1px solid #3D3D3D', borderRadius: '8px', padding: '10px 12px', color: '#FFFFFF', fontSize: '13px', outline: 'none' }}
+                          value={formData.agent_type}
+                          onChange={e => handleAgentTypeChange(e.target.value)}
+                          placeholder="Select or type an agent type"
+                        />
+                        <datalist id="agent-type-options-generate">
+                          {Object.entries(AGENT_TYPE_TEMPLATES).map(([value, config]) => (
+                            <option key={value} value={value}>{config.label}</option>
+                          ))}
+                        </datalist>
+                        <div style={{ fontSize: '11px', color: '#6B6B6B', marginTop: '6px' }}>Used for labeling — the flow below is still built from your prompt.</div>
+                      </div>
+                      <div className="col-md-6">
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#E5E5E5', marginBottom: '6px' }}>Agent Name (optional)</label>
+                        <input
+                          type="text"
+                          style={{ width: '100%', background: '#1E1E1E', border: '1px solid #3D3D3D', borderRadius: '8px', padding: '10px 12px', color: '#FFFFFF', fontSize: '13px', outline: 'none' }}
+                          value={formData.name}
+                          onChange={e => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="e.g. Riya - HR Screening"
+                        />
+                      </div>
+                    </div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#E5E5E5', marginBottom: '6px' }}>
+                      Describe the agent
+                    </label>
+                    <textarea
+                      style={{ width: '100%', background: '#1E1E1E', border: '1px solid #3D3D3D', borderRadius: '8px', padding: '12px', color: '#FFFFFF', fontSize: '13px', outline: 'none' }}
+                      rows={6}
+                      placeholder="e.g. An HR recruiter who calls candidates to screen them for a Software Engineer role — checks experience, current CTC, expected CTC, notice period, and schedules a technical interview if they're a fit."
+                      value={generatePrompt}
+                      onChange={(e) => setGeneratePrompt(e.target.value)}
+                    />
+
+                    {/* Voice picker for the generated agent — Smallest AI only,
+                        same voice catalogue used in Manual Setup. */}
+                    <div style={{ background: '#1A1A2E', border: '1px solid #3D3D5C', borderRadius: '10px', padding: '16px', marginTop: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>Smallest AI — Select Voice</span>
+                          <span style={{ fontSize: '10px', background: '#7F56D9', color: '#fff', borderRadius: '4px', padding: '2px 8px', fontWeight: 700 }}>⚡ ~100ms Latency</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '4px', background: '#0D0D1A', padding: '3px', borderRadius: '6px', border: '1px solid #2A2A44' }}>
+                          <button type="button" onClick={() => setSmallestGenderFilter('all')} style={{ padding: '3px 10px', fontSize: '11px', fontWeight: 600, borderRadius: '4px', border: 'none', background: smallestGenderFilter === 'all' ? '#5B4FBE' : 'transparent', color: smallestGenderFilter === 'all' ? '#FFF' : '#A3A3A3', cursor: 'pointer' }}>All Voices</button>
+                          <button type="button" onClick={() => setSmallestGenderFilter('female')} style={{ padding: '3px 10px', fontSize: '11px', fontWeight: 600, borderRadius: '4px', border: 'none', background: smallestGenderFilter === 'female' ? '#5B4FBE' : 'transparent', color: smallestGenderFilter === 'female' ? '#FFF' : '#A3A3A3', cursor: 'pointer' }}>♀ Female</button>
+                          <button type="button" onClick={() => setSmallestGenderFilter('male')} style={{ padding: '3px 10px', fontSize: '11px', fontWeight: 600, borderRadius: '4px', border: 'none', background: smallestGenderFilter === 'male' ? '#2A7FBF' : 'transparent', color: smallestGenderFilter === 'male' ? '#FFF' : '#A3A3A3', cursor: 'pointer' }}>♂ Male</button>
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#A3A3A3', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Voice Persona</label>
+                        <select
+                          style={{ width: '100%', background: '#0D0D1A', border: '1px solid #5B4FBE', borderRadius: '6px', padding: '9px 12px', color: '#FFFFFF', fontSize: '13px', outline: 'none' }}
+                          value={formData.smallest_voice || DEFAULT_SMALLEST_VOICE}
+                          onChange={e => e.target.value && setFormData({ ...formData, tts_provider: 'smallest', smallest_voice: e.target.value, voice: e.target.value })}
+                        >
+                          {(smallestGenderFilter === 'all' || smallestGenderFilter === 'female') && (
+                            <optgroup label="♀ FEMALE VOICES">
+                              {SMALLEST_FEMALE_VOICES.map(v => (<option key={v.value} value={v.value}>{v.label}</option>))}
+                            </optgroup>
+                          )}
+                          {(smallestGenderFilter === 'all' || smallestGenderFilter === 'male') && (
+                            <optgroup label="♂ MALE VOICES">
+                              {SMALLEST_MALE_VOICES.map(v => (<option key={v.value} value={v.value}>{v.label}</option>))}
+                            </optgroup>
+                          )}
+                        </select>
+                      </div>
+                      <div style={{ marginTop: '10px', fontSize: '12px', color: '#8B8BA7' }}>
+                        Selected voice: <strong style={{ color: '#C4B5FD', textTransform: 'capitalize' }}>{formData.smallest_voice || DEFAULT_SMALLEST_VOICE}</strong>
+                        {' '}· Supports English, Hindi, Hinglish + 30 Indian languages
+                      </div>
+                    </div>
+
+                    <div className="d-flex justify-content-end gap-3 pt-4 mt-2" style={{ borderTop: '1px solid #262626' }}>
+                      <button type="button" className="btn btn-outline-secondary" onClick={closeModal}>Cancel</button>
+                      <button
+                        type="button"
+                        className="btn btn-sm mt-3"
+                        style={{ background: '#FFFFFF', color: '#0A0A0A', border: 'none', padding: '8px 20px', fontWeight: 600 }}
+                        disabled={generating || !generatePrompt.trim()}
+                        onClick={handleGenerateFlow}
+                      >
+                        {generating ? 'Generating...' : '✨ Generate Agent'}
+                      </button>
+                    </div>
+
+                    
+
+                    {generateError && (
+                      <div style={{ color: '#F87171', fontSize: '12px', marginTop: '10px' }}>
+                        ⚠️ {generateError}
+                      </div>
+                    )}
+
+                    {generatedFlow && (
+                      <div style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid #4ADE80', borderRadius: '8px', padding: '14px', marginTop: '14px' }}>
+                        <div style={{ color: '#4ADE80', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>
+                          ✅ Flow generated — {generatedFlow.conversationFlow?.nodes?.length || 0} nodes
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#A3A3A3', marginBottom: '10px' }}>
+                          {generatedFlow.agent_name}
+                        </div>
+                        <div className="d-flex gap-2">
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-light"
+                            onClick={() => setShowGeneratePreview(true)}
+                          >
+                            Preview Flow
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            style={{ background: '#FFFFFF', color: '#0A0A0A', border: 'none', fontWeight: 600 }}
+                            onClick={handleApproveGeneratedFlow}
+                          >
+                            ✓ Approve & Create Agent
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {/* yahan tumhara EXISTING manual form JSX aata hai — 
+                        "1. General Settings" se lekar submit button tak, jo already hai */}
+                  
                   {/* General Settings */}
                   <h6 style={{ fontSize: '12px', fontWeight: 600, color: '#A3A3A3', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #262626', paddingBottom: '8px', marginBottom: '16px' }}>1. General Settings</h6>
                   <div className="row g-3 mb-4">
                     <div className="col-md-6">
                       <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#E5E5E5', marginBottom: '6px' }}>Agent Type (Persona)</label>
-                      <select style={{ width: '100%', background: '#1E1E1E', border: '1px solid #3D3D3D', borderRadius: '8px', padding: '10px 12px', color: '#FFFFFF', fontSize: '13px', outline: 'none' }} value={formData.agent_type} onChange={e => handleAgentTypeChange(e.target.value)}>
+                      <input
+                        list="agent-type-options-manual"
+                        type="text"
+                        style={{ width: '100%', background: '#1E1E1E', border: '1px solid #3D3D3D', borderRadius: '8px', padding: '10px 12px', color: '#FFFFFF', fontSize: '13px', outline: 'none' }}
+                        value={formData.agent_type}
+                        onChange={e => handleAgentTypeChange(e.target.value)}
+                        placeholder="Select or type an agent type"
+                      />
+                      <datalist id="agent-type-options-manual">
                         {Object.entries(AGENT_TYPE_TEMPLATES).map(([value, config]) => (
                           <option key={value} value={value}>{config.label}</option>
                         ))}
-                      </select>
+                      </datalist>
                       <div style={{ fontSize: '11px', color: '#6B6B6B', marginTop: '6px' }}>Sets the default prompt and data fields.</div>
                     </div>
                     <div className="col-md-6">
@@ -1881,77 +2261,6 @@ export default function AgentsPage() {
                     </div>
                   )}
 
-                  {/* {formData.tts_provider === 'smallest' && (
-                    <div style={{ background: '#1A1A2E', border: '1px solid #3D3D5C', borderRadius: '10px', padding: '16px', marginBottom: '24px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>Smallest AI — Select Voice</span>
-                          <span style={{ fontSize: '10px', background: '#7F56D9', color: '#fff', borderRadius: '4px', padding: '2px 8px', fontWeight: 700 }}>⚡ ~100ms Latency</span>
-                        </div>
-
-                        {/* Gender Filter Pills 
-                        <div style={{ display: 'flex', gap: '4px', background: '#0D0D1A', padding: '3px', borderRadius: '6px', border: '1px solid #2A2A44' }}>
-                          <button
-                            type="button"
-                            onClick={() => setSmallestGenderFilter('all')}
-                            style={{ padding: '3px 10px', fontSize: '11px', fontWeight: 600, borderRadius: '4px', border: 'none', background: smallestGenderFilter === 'all' ? '#5B4FBE' : 'transparent', color: smallestGenderFilter === 'all' ? '#FFF' : '#A3A3A3', cursor: 'pointer' }}
-                          >
-                            All Voices
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSmallestGenderFilter('female')}
-                            style={{ padding: '3px 10px', fontSize: '11px', fontWeight: 600, borderRadius: '4px', border: 'none', background: smallestGenderFilter === 'female' ? '#5B4FBE' : 'transparent', color: smallestGenderFilter === 'female' ? '#FFF' : '#A3A3A3', cursor: 'pointer' }}
-                          >
-                            ♀ Female
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSmallestGenderFilter('male')}
-                            style={{ padding: '3px 10px', fontSize: '11px', fontWeight: 600, borderRadius: '4px', border: 'none', background: smallestGenderFilter === 'male' ? '#2A7FBF' : 'transparent', color: smallestGenderFilter === 'male' ? '#FFF' : '#A3A3A3', cursor: 'pointer' }}
-                          >
-                            ♂ Male
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Single Unified Voice Select Dropdown *
-                      <div>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#A3A3A3', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Voice Persona
-                        </label>
-                        <select
-                          style={{ width: '100%', background: '#0D0D1A', border: '1px solid #5B4FBE', borderRadius: '6px', padding: '9px 12px', color: '#FFFFFF', fontSize: '13px', outline: 'none' }}
-                          value={formData.smallest_voice || DEFAULT_SMALLEST_VOICE}
-                          onChange={e => e.target.value && setFormData({...formData, smallest_voice: e.target.value, voice: e.target.value})}
-                        >
-                          {(smallestGenderFilter === 'all' || smallestGenderFilter === 'female') && (
-                            <optgroup label="♀ FEMALE VOICES">
-                              {SMALLEST_FEMALE_VOICES.map(v => (
-                                <option key={v.value} value={v.value}>{v.label}</option>
-                              ))}
-                            </optgroup>
-                          )}
-                          {(smallestGenderFilter === 'all' || smallestGenderFilter === 'male') && (
-                            <optgroup label="♂ MALE VOICES">
-                              {SMALLEST_MALE_VOICES.map(v => (
-                                <option key={v.value} value={v.value}>{v.label}</option>
-                              ))}
-                            </optgroup>
-                          )}
-                        </select>
-                      </div>
-
-                      <div style={{ marginTop: '10px', fontSize: '12px', color: '#8B8BA7', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        Selected voice: <strong style={{ color: '#C4B5FD', textTransform: 'capitalize' }}>{formData.smallest_voice || DEFAULT_SMALLEST_VOICE}</strong>
-                        <span style={{ fontSize: '10px', background: SMALLEST_FEMALE_VOICES.some(v => v.value === (formData.smallest_voice || DEFAULT_SMALLEST_VOICE)) ? 'rgba(127, 86, 217, 0.2)' : 'rgba(42, 127, 191, 0.2)', color: SMALLEST_FEMALE_VOICES.some(v => v.value === (formData.smallest_voice || DEFAULT_SMALLEST_VOICE)) ? '#C4B5FD' : '#93C5FD', padding: '1px 6px', borderRadius: '4px', border: `1px solid ${SMALLEST_FEMALE_VOICES.some(v => v.value === (formData.smallest_voice || DEFAULT_SMALLEST_VOICE)) ? '#5B4FBE' : '#2A7FBF'}` }}>
-                          {SMALLEST_FEMALE_VOICES.some(v => v.value === (formData.smallest_voice || DEFAULT_SMALLEST_VOICE)) ? '♀ Female' : '♂ Male'}
-                        </span>
-                        · Supports English, Hindi, Hinglish + 30 Indian languages
-                      </div>
-                    </div>
-              )}
- */}
 
                                   {formData.tts_provider === 'smallest' && (
                     <div style={{ background: '#1A1A2E', border: '1px solid #3D3D5C', borderRadius: '10px', padding: '16px', marginBottom: '24px' }}>
@@ -2005,8 +2314,8 @@ export default function AgentsPage() {
                           )}
                           {(smallestGenderFilter === 'all' || smallestGenderFilter === 'male') && (
                             <optgroup label="♂ MALE VOICES">
-                              {SMALLEST_MALE_VOICES.map(v => (
-                                <option key={v.value} value={v.value}>{v.label}</option>
+                              {SMALLEST_MALE_VOICES.map((v, index) => (
+                                <option key={`${v.value}-${index}`} value={v.value}>{v.label}</option>
                               ))}
                             </optgroup>
                           )}
@@ -2128,6 +2437,18 @@ export default function AgentsPage() {
                     <button type="button" className="btn btn-outline-secondary" onClick={closeModal}>Cancel</button>
                     <button type="submit" style={{ background: '#FFFFFF', color: '#0A0A0A', border: 'none', borderRadius: '6px', padding: '8px 20px', fontWeight: 600, fontSize: '14px' }}>{modalMode === 'edit' ? 'Save Changes' : 'Create Agent'}</button>
                   </div>
+                  {showGeneratePreview && generatedFlow && (
+                    <FlowPreviewModal
+                      agent={{ name: generatedFlow.agent_name || 'New Agent', id: 'preview' }}
+                      preview={{ draft: generatedFlow.conversationFlow }}
+                      loading={false}
+                      error=""
+                      onClose={() => setShowGeneratePreview(false)}
+                      onSave={null}
+                    />
+                  )}
+                  </>
+                )}
                 </form>
               </div>
             </div>

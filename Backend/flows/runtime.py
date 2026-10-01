@@ -66,12 +66,9 @@ from stt import config as stt_cfg
 
 # Root-relative path for the agent schema
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STATE_SCHEMA_PATH = os.path.join(
-    _ROOT,
-    "db",
-    "agents",
-    "real_estate.json",
-)
+DEFAULT_SCHEMA_PATH = os.path.join(_ROOT, "db", "agents", "real_estate")
+STATE_SCHEMA_PATH = DEFAULT_SCHEMA_PATH
+
 CALL_CONNECTED_TRIGGER = "[System: The call has just been connected. No user has spoken yet. Speak only for the current conversation node and do not transition.]"
 
 try:
@@ -139,7 +136,7 @@ class VoiceTurnState:
 class RealEstateLLMProcessor(FrameProcessor):
     """Turn user transcripts into LLM responses and manage node states with GenID sync."""
 
-    def __init__(self, turn_state: VoiceTurnState | None = None):
+    def __init__(self, turn_state: VoiceTurnState | None = None, schema_path: str | None = None):
         super().__init__()
         self.turn_state = turn_state
         self.history: list[dict[str, str]] = []
@@ -148,13 +145,14 @@ class RealEstateLLMProcessor(FrameProcessor):
         self.last_user_text = ""
         self.last_user_at = 0.0
         self._booted = False
-        self.state_manager = StateManager(STATE_SCHEMA_PATH)
+        self.state_manager = StateManager(schema_path or STATE_SCHEMA_PATH)
         self._current_gen_id = 0
         self._fallback_replies = [
             "Sorry, I didn't catch that clearly. Could you repeat that once?",
             "I'm sorry, I missed that. Could you say it again?",
             "Apologies, my line dropped for a second. What was that?",
         ]
+        
 
     async def process_frame(self, frame: Frame, direction: FrameDirection = None):  # type: ignore
         print("LLM RECEIVED:", type(frame), frame, direction)
@@ -326,22 +324,28 @@ class RealEstateLLMProcessor(FrameProcessor):
             )
 
             # 2. Analyze user's intent
+            schema = self.state_manager.schema
+            domain = str(
+                (schema.get("agent_metadata") or {}).get("agent_type")
+                or schema.get("agent_type")
+                or "real_estate"
+            )
             intent_analysis = await analyze_user_intent(
                 user_text,
-                conversation_context
+                conversation_context,
+                domain=domain,
+                schema=self.state_manager.schema,
             )
 
+            entities_obj = intent_analysis.entities
+            entities_dump = (
+                entities_obj.model_dump() if hasattr(entities_obj, "model_dump")
+                else entities_obj.dict()
+            )
             intent_data = {
                 "intent": intent_analysis.intent,
                 "confidence_score": intent_analysis.confidence_score,
-                "entities": {
-                    "intent_value": intent_analysis.entities.intent_value,
-                    "budget_range": intent_analysis.entities.budget_range,
-                    "preferred_bhk": intent_analysis.entities.preferred_bhk,
-                    "location": intent_analysis.entities.location,
-                    "timeline_weeks": intent_analysis.entities.timeline_weeks,
-                    "user_name": intent_analysis.entities.user_name,
-                },
+                "entities": {k: v for k, v in entities_dump.items() if v is not None},
             }
 
             # 3. Execute state-machine transition

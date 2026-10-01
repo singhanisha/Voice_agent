@@ -3089,37 +3089,23 @@ class StateManager:
                 return edge
 
         positive_markers = (
-            "correct person",
-            "correct",
-            "user is free",
-            "user is",
-            "agrees",
-            "agree",
-            "hear more",
-            "wants to visit",
-            "finished confirmation",
-            "done",
-            "speak",
-            "confirms identity",
-            "confirms",
-            # FIX M2: these edge phrasings exist in real_estate.json but
-            # weren't recognized as "confirm"-type edges, so the generalized
-            # consent-gate rescue skipped this node entirely.
-            "interested in visit",
-            "wants visit",
+            "correct person", "correct", "user is free", "user is",
+            "agrees", "agree", "hear more", "wants to visit",
+            "finished confirmation", "done", "speak", "confirms identity",
+            "confirms", "interested in visit", "wants visit",
+            # Generic additions — kisi bhi LLM-generated flow (LIC, finance,
+            # jiotv, future agents) ke greeting/consent nodes ke liye zaroori,
+            # jahan condition text bilkul alag likha ho sakta hai
+            "ready", "available", "good time", "time to talk", "willing",
+            "consents", "proceed", "continue", "yes", "confirm",
         )
         negative_markers = (
-            "wrong person",
-            "busy",
-            "reject",
-            "not looking",
-            "not interested",
-            "still rejects",
-            "uncertain",
-            "tell later",
-            "later",
-            "refuses",
+            "wrong person", "busy", "reject", "not looking", "not interested",
+            "still rejects", "uncertain", "tell later", "later", "refuses",
             "busy or rejects now",
+            # Generic additions
+            "not available", "not ready", "no time", "can't talk", "cant talk",
+            "not now", "not a good time", "unwilling",
         )
 
         markers = positive_markers if intent == "confirm" else negative_markers
@@ -3142,8 +3128,23 @@ class StateManager:
                 return edge
 
         # Dynamic fallback: if there is exactly 1 edge and intent is confirm, follow it
-        if len(edges) == 1 and intent == "confirm":
-            return edges[0]
+        if len(edges) == 2:
+            _NEGATION_WORDS = (
+                "not", "no", "wrong", "busy", "reject", "later",
+                "refuse", "never", "cant", "can't", "unavailable", "nahi",
+            )
+            for edge in edges:
+                condition = " ".join(
+                    filter(None, [
+                        edge.get("condition", ""),
+                        edge.get("transition_condition", {}).get("prompt", ""),
+                    ])
+                ).lower()
+                has_negation = any(w in condition for w in _NEGATION_WORDS)
+                if intent == "confirm" and not has_negation:
+                    return edge
+                if intent != "confirm" and has_negation:
+                    return edge
 
         return None
 
@@ -3220,7 +3221,7 @@ class StateManager:
         intent_aliases = {
             "confirm": {
                 "confirm", "affirm", "yes", "acknowledge", "open_yes", "perm_yes",
-                "conv_yes", "interested", "okay", "ok", "sure", "haan", "acha",
+                "conv_yes", "okay", "ok", "sure", "haan", "acha",
                 "conversation finished", "finished",
             },
             "deny": {"deny", "no", "reject", "decline", "conv_no", "not_interested"},

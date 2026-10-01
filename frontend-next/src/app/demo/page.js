@@ -75,14 +75,21 @@ function DemoCampaignContent() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
+    // Wait until we know who is logged in, and for clients only load THEIR
+    // own agents (previously everyone's agents were listed and the first
+    // one - often a real-estate agent - was auto-selected).
+    if (!currentRole) return;
     const fetchAgents = async () => {
       try {
-        const res = await fetch(`${API}/api/agents`);
+        const url = currentRole === 'client' && user?.email
+          ? `${API}/api/agents?user_email=${encodeURIComponent(user.email)}`
+          : `${API}/api/agents`;
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           setAgents(Array.isArray(data) ? data : []);
-          if (!queryAgentId && data && data.length > 0) {
-            setSelectedAgentId(data[0].id || data[0].agent_id);
+          if (!queryAgentId) {
+            setSelectedAgentId(data && data.length > 0 ? (data[0].id || data[0].agent_id) : '');
           }
         }
       } catch (err) {
@@ -92,7 +99,7 @@ function DemoCampaignContent() {
       }
     };
     fetchAgents();
-  }, [queryAgentId, API]);
+  }, [queryAgentId, API, currentRole, user?.email]);
 
   const profile = useMemo(() => {
     return currentRole === 'client' && user?.agentId

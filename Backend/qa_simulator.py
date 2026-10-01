@@ -141,6 +141,9 @@ class QASimulator:
         except Exception as e:
             return False, [{"test": test_name, "error": f"Failed to generate greeting: {e}"}]
 
+        # generate_response returns (text, flag) - unpack safely
+        if isinstance(greeting, tuple):
+            greeting = greeting[0]
         last_ai_text = greeting or "Hello"
         conversation_history.append({"role": "assistant", "content": last_ai_text})
         
@@ -184,6 +187,8 @@ class QASimulator:
                 passed = False
                 break
                 
+            if isinstance(ai_response, tuple):
+                ai_response = ai_response[0]
             if ai_response:
                 clean_ai_response = ai_response.lower().strip()
                 # Repetition check
