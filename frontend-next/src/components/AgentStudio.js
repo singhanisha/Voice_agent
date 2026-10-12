@@ -25,11 +25,25 @@ const textToCollects = (t) => {
 const edgeCondition = (e) => e?.transition_condition?.prompt || e?.condition || '';
 
 /* ───────────────────────── Live test panel ───────────────────────── */
-function TestPanel({ agent, userName, dirty, onOpenQA }) {
+function TestPanel({ agent, userName, dirty, onOpenQA, onActiveNode }) {
   const { connect, disconnect, isConnected, statusText, transcripts, clearTranscripts } =
     useVoiceSocket(agent?.id, agent?.client_id);
 
   useEffect(() => () => disconnect(), [disconnect]);
+
+  // Nodes the agent has spoken from, in order (consecutive repeats merged).
+  const trail = [];
+  transcripts.forEach((m) => {
+    if (m.speaker === 'agent' && m.node_id && trail[trail.length - 1]?.id !== m.node_id) {
+      trail.push({ id: m.node_id, name: m.node_name || m.node_id });
+    }
+  });
+  const current = trail[trail.length - 1] || null;
+
+  useEffect(() => {
+    onActiveNode?.(isConnected ? (current?.id || null) : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id, isConnected]);
 
   return (
     <div className="as-test-inner">
@@ -53,6 +67,20 @@ function TestPanel({ agent, userName, dirty, onOpenQA }) {
       </div>
 
       <div className="as-panel-head" style={{ marginTop: 18 }}>
+        <span>Flow path</span>
+      </div>
+      <div className="as-trail">
+        {trail.length === 0 ? (
+          <div className="as-empty" style={{ padding: 10 }}>Nodes will appear here as the call moves through the flow</div>
+        ) : trail.map((t, i) => (
+          <span key={`${t.id}-${i}`} className={`as-trail-chip ${i === trail.length - 1 ? 'now' : ''}`}>
+            {i > 0 && <span className="as-trail-arrow">→</span>}
+            {t.name}
+          </span>
+        ))}
+      </div>
+
+      <div className="as-panel-head" style={{ marginTop: 18 }}>
         <span>Transcript</span>
         <button className="as-link" onClick={clearTranscripts}>Clear</button>
       </div>
@@ -64,6 +92,7 @@ function TestPanel({ agent, userName, dirty, onOpenQA }) {
             <div key={i} className={`as-msg ${isAgent ? 'agent' : 'user'}`}>
               <div className="as-msg-who">{isAgent ? <><Bot size={11} /> Agent</> : <><User size={11} /> You</>}</div>
               <div>{m.text}</div>
+              {isAgent && m.node_name && <span className="as-msg-node">{m.node_name}</span>}
             </div>
           );
         })}
@@ -95,6 +124,7 @@ export default function AgentStudio({ agent, user, API, buildHeaders, onClose, o
   const [jsonError, setJsonError] = useState('');
   const [sections, setSections] = useState({ voice: true, fields: true, info: false });
   const [showQA, setShowQA] = useState(false);
+  const [activeNodeId, setActiveNodeId] = useState(null);
   const [insertForm, setInsertForm] = useState(null); // {afterId, edgeIdx, name, response, collects}
 
   const load = useCallback(async () => {
@@ -488,11 +518,12 @@ export default function AgentStudio({ agent, user, API, buildHeaders, onClose, o
                   {nodes.map((n, idx) => {
                     const open = openNode === n.id;
                     return (
-                      <div key={n.id} className={`as-node ${open ? 'open' : ''}`}>
+                      <div key={n.id} className={`as-node ${open ? 'open' : ''} ${n.id === activeNodeId ? 'live' : ''}`}>
                         <button className="as-node-head" onClick={() => setOpenNode(open ? null : n.id)}>
                           {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                           <span className="as-node-idx">{idx + 1}</span>
                           <span className="as-node-name">{n.name || n.id}</span>
+                          {n.id === activeNodeId && <span className="as-chip live">● Live</span>}
                           {n.id === startId && <span className="as-chip green">Start</span>}
                           {!reachable.has(n.id) && <span className="as-chip red" title="No path from the start reaches this node - the agent will never say it">Not connected</span>}
                           <span className="as-chip">{n.type || 'conversation'}</span>
@@ -647,6 +678,7 @@ export default function AgentStudio({ agent, user, API, buildHeaders, onClose, o
               userName={user?.name || user?.email}
               dirty={dirty}
               onOpenQA={() => setShowQA(true)}
+              onActiveNode={setActiveNodeId}
             />
           </aside>
         </div>
@@ -682,6 +714,13 @@ const CSS = `
 .as-link{border:none;background:none;color:#2563eb;font-size:12px;cursor:pointer;padding:0}
 .as-link.danger{color:#dc2626}.as-link:disabled{color:#A3A3A3;cursor:default}
 .as-chip{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;background:#F0F0F0;color:#404040;white-space:nowrap}
+.as-chip.live{background:#10b981;color:#fff;font-weight:600}
+.as-node.live{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+.as-trail{display:flex;flex-wrap:wrap;gap:4px;align-items:center;border:1px solid #EEE;border-radius:12px;padding:8px;background:#FCFCFC;max-height:130px;overflow-y:auto}
+.as-trail-chip{font-size:11px;padding:3px 9px;border-radius:999px;background:#F0F0F0;color:#404040;display:inline-flex;gap:6px;align-items:center}
+.as-trail-chip.now{background:#10b981;color:#fff;font-weight:600}
+.as-trail-arrow{opacity:.5}
+.as-msg-node{display:inline-block;margin-top:6px;font-size:10px;padding:1px 8px;border-radius:999px;background:#fff;border:1px solid #D4D4D4;color:#525252}
 .as-chip.red{background:#FEE2E2;color:#991B1B}.as-insert{margin-top:12px;padding:14px 16px;border:1px dashed #0A0A0A;border-radius:14px;background:#FCFCFC}
 .as-edge{grid-template-columns:1fr auto 1fr auto}
 .as-chip.warn{background:#FEF3C7;color:#92400E}.as-chip.green{background:#DCFCE7;color:#166534}.as-chip.blue{background:#E0EAFF;color:#1E40AF}

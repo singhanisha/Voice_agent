@@ -1,0 +1,286 @@
+{
+    "agent_name": "Finance Assistant - Arjun",
+    "conversationFlow": {
+        "start_node_id": "node-greeting",
+        "global_prompt": "You are a compliant finance advisory voice agent.\n\nPrimary goal:\nUnderstand the customer's interest in financial products such as personal loans, business loans, credit cards, insurance, or investments and qualify them for a human advisor.\n\nConversation style:\nBe calm, trustworthy, and precise. Ask one question at a time. Avoid pressure tactics. Keep the conversation short and respectful.\n\nDiscovery questions:\n1. Ask which financial product they are interested in.\n2. Ask the purpose, required amount, or preferred plan.\n3. Ask broad eligibility details only when appropriate, such as income range or employment type.\n4. Ask their timeline for taking a decision.\n5. Ask for permission to arrange a callback from an advisor.\n\nCompliance rules:\nDo not guarantee approval, returns, interest rates, tax benefits, or eligibility. Do not collect sensitive data such as OTPs, full card numbers, passwords, bank PINs, Aadhaar numbers, or account login details.\n\nFinal outcome:\nSummarize the customer's need and confirm that an authorized advisor will follow up.",
+        "nodes": [
+            {
+                "id": "root_greeting",
+                "name": "Initial Greeting",
+                "type": "conversation",
+                "intent_triggers": [
+                    "call_connected"
+                ],
+                "edges": [
+                    {
+                        "id": "to_discovery",
+                        "condition": "user responds",
+                        "destination_node_id": "discovery"
+                    }
+                ],
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Greet the user warmly as Finance Assistant - Arjun and confirm identity using the lead name."
+                },
+                "response": "Hello, this is Finance Assistant - Arjun from the Finance advisory team. Am I speaking with {{name}}?"
+            },
+            {
+                "id": "node-greeting",
+                "name": "Greeting",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Greet the caller, confirm you are speaking with the right person and ask if they have a minute."
+                },
+                "response": "Good morning, this is Arjun from the Finance Support team. Do you have a minute to discuss your financial needs?",
+                "edges": [
+                    {
+                        "condition": "caller has time",
+                        "id": "edge-has-time",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller says they have a minute"
+                        },
+                        "destination_node_id": "node-ask-interest"
+                    },
+                    {
+                        "condition": "caller busy or not right person",
+                        "id": "edge-no-time",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller says they are busy or not the right person"
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-interest",
+                "name": "Interest Check",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask if the caller is interested in a loan or other finance service."
+                },
+                "response": "Are you looking for a loan or any other financial service today?",
+                "collects": "interested",
+                "edges": [
+                    {
+                        "condition": "caller interested",
+                        "id": "edge-interested",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller says they are interested"
+                        },
+                        "destination_node_id": "node-ask-product"
+                    },
+                    {
+                        "condition": "caller not interested",
+                        "id": "edge-not-interested",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller says they are not interested"
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-product",
+                "name": "Product Interest",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask which type of loan or finance product they are interested in."
+                },
+                "response": "Which type of loan or financial product are you interested in?",
+                "collects": "product_interest",
+                "edges": [
+                    {
+                        "condition": "product specified",
+                        "id": "edge-product-specified",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller specifies a product"
+                        },
+                        "destination_node_id": "node-ask-income"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-income",
+                "name": "Income Range",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for their monthly income or income range."
+                },
+                "response": "Could you share your monthly income or income range?",
+                "collects": "income_range",
+                "edges": [
+                    {
+                        "condition": "income provided",
+                        "id": "edge-income-given",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller provides income"
+                        },
+                        "destination_node_id": "node-ask-amount"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-amount",
+                "name": "Loan Amount",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask how much loan amount they need."
+                },
+                "response": "What loan amount are you looking to borrow?",
+                "collects": "loan_amount",
+                "edges": [
+                    {
+                        "condition": "amount provided",
+                        "id": "edge-amount-given",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller provides loan amount"
+                        },
+                        "destination_node_id": "node-ask-timeline"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-timeline",
+                "name": "Timeline",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask when they would like to start the loan process or need the funds."
+                },
+                "response": "When would you like to start the loan process or need the funds?",
+                "collects": "timeline",
+                "edges": [
+                    {
+                        "condition": "timeline clear",
+                        "id": "edge-timeline-given",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller provides a clear date or time"
+                        },
+                        "destination_node_id": "node-ask-callback"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-callback",
+                "name": "Callback Request",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask if they would like a callback and collect preferred time if needed."
+                },
+                "response": "Would you like me to call you back to discuss this further?",
+                "collects": "callback",
+                "edges": [
+                    {
+                        "condition": "callback requested with time",
+                        "id": "edge-callback-with-time",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller provides a specific callback time"
+                        },
+                        "destination_node_id": "node-confirm-end"
+                    },
+                    {
+                        "condition": "callback requested without time",
+                        "id": "edge-callback-no-time",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller wants a callback but no time given"
+                        },
+                        "destination_node_id": "node-ask-callback-time"
+                    },
+                    {
+                        "condition": "no callback",
+                        "id": "edge-no-callback",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller says no callback"
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-callback-time",
+                "name": "Callback Time",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for a suitable callback time."
+                },
+                "response": "What time would be convenient for you?",
+                "edges": [
+                    {
+                        "condition": "time provided",
+                        "id": "edge-callback-time-given",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "caller provides a callback time"
+                        },
+                        "destination_node_id": "node-confirm-end"
+                    }
+                ]
+            },
+            {
+                "id": "node-confirm-end",
+                "name": "Confirmation",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Confirm the callback details and end politely."
+                },
+                "response": "Got it, I\u2019ll call you back on ${timeline} at ${callback}. Thank you for your time!",
+                "edges": [
+                    {
+                        "condition": "end",
+                        "id": "edge-end",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "conversation ends"
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-goodbye",
+                "name": "End",
+                "type": "end",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "End the call warmly."
+                },
+                "response": "Thank you for calling. Have a great day!",
+                "edges": []
+            }
+        ]
+    },
+    "voice_id": "arjun",
+    "global_prompt": "You are a compliant finance advisory voice agent.\n\nPrimary goal:\nUnderstand the customer's interest in financial products such as personal loans, business loans, credit cards, insurance, or investments and qualify them for a human advisor.\n\nConversation style:\nBe calm, trustworthy, and precise. Ask one question at a time. Avoid pressure tactics. Keep the conversation short and respectful.\n\nDiscovery questions:\n1. Ask which financial product they are interested in.\n2. Ask the purpose, required amount, or preferred plan.\n3. Ask broad eligibility details only when appropriate, such as income range or employment type.\n4. Ask their timeline for taking a decision.\n5. Ask for permission to arrange a callback from an advisor.\n\nCompliance rules:\nDo not guarantee approval, returns, interest rates, tax benefits, or eligibility. Do not collect sensitive data such as OTPs, full card numbers, passwords, bank PINs, Aadhaar numbers, or account login details.\n\nFinal outcome:\nSummarize the customer's need and confirm that an authorized advisor will follow up.",
+    "tts_provider": "smallest",
+    "stt_provider": "groq",
+    "provider_config": {
+        "stt_provider": "groq",
+        "tts_provider": "smallest",
+        "cartesia_voice_id": "95d51f79-c397-46f9-b49a-23763d3eaa2d",
+        "parler_description": ""
+    },
+    "agent_metadata": {
+        "agent_type": "finance",
+        "assigned_email": "anishas2218@gmail.com",
+        "client_id": "user-92cfd4d9a61a"
+    }
+}

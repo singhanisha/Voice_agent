@@ -1,0 +1,355 @@
+{
+    "agent_name": "Supriya",
+    "conversationFlow": {
+        "start_node_id": "node-greeting",
+        "global_prompt": "You are Supriya, a friendly travel assistant calling a customer to plan a trip. Keep responses short, ask one question at a time, and never repeat information already provided. If the customer is not interested, politely end the call.",
+        "nodes": [
+            {
+                "id": "root_greeting",
+                "name": "Initial Greeting",
+                "type": "conversation",
+                "intent_triggers": [
+                    "call_connected"
+                ],
+                "edges": [
+                    {
+                        "id": "to_discovery",
+                        "condition": "user responds",
+                        "destination_node_id": "root_greeting"
+                    }
+                ],
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Greet the user warmly as Supriya and confirm identity using the lead name."
+                },
+                "response": "Hello, this is Supriya from the Finance advisory team. Am I speaking with {{name}}?"
+            },
+            {
+                "id": "node-greeting",
+                "name": "Greeting",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Greet naturally, introduce yourself, and confirm you can help plan a trip."
+                },
+                "response": "Hi, this is Supriya from TravelMate. May I know your name?",
+                "collects": "customer_name",
+                "edges": [
+                    {
+                        "condition": "name provided",
+                        "id": "edge-name-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user provides their name"
+                        },
+                        "destination_node_id": "node-ask-destination"
+                    },
+                    {
+                        "condition": "not interested",
+                        "id": "edge-not-interest",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user says they are not interested or busy"
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-destination",
+                "name": "Ask Destination",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask where the customer would like to travel."
+                },
+                "response": "Where would you like to travel?",
+                "collects": "destination",
+                "edges": [
+                    {
+                        "id": "edge-68107",
+                        "condition": "user responds",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user responds"
+                        },
+                        "destination_node_id": "node-custom-43795"
+                    }
+                ]
+            },
+            {
+                "id": "node-custom-43795",
+                "name": "Ask Date",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "When you would like to travel?"
+                },
+                "response": "When you would like to travel?",
+                "edges": [
+                    {
+                        "id": "edge-node-custom-43795",
+                        "condition": "Caller responds.",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller responds."
+                        },
+                        "destination_node_id": "node-fallback-dates"
+                    }
+                ]
+            },
+            {
+                "id": "node-fallback-dates",
+                "name": "Fallback Dates",
+                "type": "fallback",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Politely ask them to repeat dates in a clearer format."
+                },
+                "response": "Sorry, I didn\u2019t catch that. Could you tell me the exact dates, like the month and day?",
+                "edges": [
+                    {
+                        "id": "edge-93248",
+                        "condition": "user responds",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user responds"
+                        },
+                        "destination_node_id": "node-ask-trip-type"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-trip-type",
+                "name": "Ask Trip Type",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask what type of trip they are planning."
+                },
+                "response": "What type of trip is this? Leisure, business, honeymoon, family, or adventure?",
+                "collects": "trip_type",
+                "edges": [
+                    {
+                        "condition": "type provided",
+                        "id": "edge-trip-type-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user states trip type"
+                        },
+                        "destination_node_id": "node-ask-hotel"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-hotel",
+                "name": "Ask Hotel",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask about preferred hotel category or accommodation budget."
+                },
+                "response": "Do you have a preferred hotel category or budget?",
+                "collects": "hotel_pref",
+                "edges": [
+                    {
+                        "condition": "hotel info provided",
+                        "id": "edge-hotel-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user gives hotel preference"
+                        },
+                        "destination_node_id": "node-ask-transport"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-transport",
+                "name": "Ask Transport",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask about transportation preference."
+                },
+                "response": "What transportation do you prefer? Plane, train, car, or something else?",
+                "collects": "transport_pref",
+                "edges": [
+                    {
+                        "condition": "transport provided",
+                        "id": "edge-transport-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user gives transport preference"
+                        },
+                        "destination_node_id": "node-ask-budget"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-budget",
+                "name": "Ask Budget",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for approximate total budget."
+                },
+                "response": "What\u2019s your approximate total budget for the trip?",
+                "collects": "total_budget",
+                "edges": [
+                    {
+                        "condition": "budget provided",
+                        "id": "edge-budget-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user gives a clear budget"
+                        },
+                        "destination_node_id": "node-ask-special"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-special",
+                "name": "Ask Special",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask if they have any special requirements."
+                },
+                "response": "Do you have any special requirements like sightseeing, airport pickup, accessibility, meals, or specific activities?",
+                "collects": "special_requirements",
+                "edges": [
+                    {
+                        "condition": "special info provided",
+                        "id": "edge-special-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user gives special requirements"
+                        },
+                        "destination_node_id": "node-summarize"
+                    }
+                ]
+            },
+            {
+                "id": "node-summarize",
+                "name": "Summarize",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Summarize all collected info and ask for confirmation."
+                },
+                "response": "Just to confirm: you\u2019re traveling to {destination} from {travel_dates} with {num_travelers} people, it\u2019s a {trip_type} trip, you prefer a {hotel_pref} hotel, will use {transport_pref} transport, budget around {total_budget}, and you need {special_requirements}. Is that correct?",
+                "edges": [
+                    {
+                        "condition": "all correct",
+                        "id": "edge-confirm-yes",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user confirms all details"
+                        },
+                        "destination_node_id": "node-proceed"
+                    },
+                    {
+                        "condition": "any change",
+                        "id": "edge-confirm-no",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user says something is wrong"
+                        },
+                        "destination_node_id": "node-update"
+                    }
+                ]
+            },
+            {
+                "id": "node-update",
+                "name": "Update Info",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask which detail needs updating and gather the new info."
+                },
+                "response": "Which detail would you like to change?",
+                "collects": "update_field",
+                "edges": [
+                    {
+                        "condition": "field identified",
+                        "id": "edge-field-identified",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user specifies a field to change"
+                        },
+                        "destination_node_id": "node-ask-new-value"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-new-value",
+                "name": "Ask New Value",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for the new value of the specified field."
+                },
+                "response": "What would you like to change it to?",
+                "collects": "new_value",
+                "edges": [
+                    {
+                        "condition": "new value provided",
+                        "id": "edge-new-value-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user gives new value"
+                        },
+                        "destination_node_id": "node-summarize"
+                    }
+                ]
+            },
+            {
+                "id": "node-proceed",
+                "name": "Proceed",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Explain that the request will be processed and availability will be checked."
+                },
+                "response": "Great! I\u2019ll process your request and check availability. I\u2019ll get back to you shortly with options. Thank you for choosing TravelMate!",
+                "edges": [
+                    {
+                        "condition": "end",
+                        "id": "edge-end",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "call ends"
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-goodbye",
+                "name": "Goodbye",
+                "type": "end",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "End the call warmly."
+                },
+                "response": "Thank you for your time. Have a wonderful trip!",
+                "edges": []
+            }
+        ]
+    },
+    "voice_id": "siya",
+    "global_prompt": "You are Supriya, a friendly travel assistant calling a customer to plan a trip. Keep responses short, ask one question at a time, and never repeat information already provided. If the customer is not interested, politely end the call.",
+    "tts_provider": "smallest",
+    "stt_provider": "smallest",
+    "provider_config": {
+        "stt_provider": "smallest",
+        "tts_provider": "smallest",
+        "cartesia_voice_id": "95d51f79-c397-46f9-b49a-23763d3eaa2d",
+        "parler_description": ""
+    },
+    "agent_metadata": {
+        "agent_type": "finance",
+        "assigned_email": "laxmi@gmail.com",
+        "client_id": "user-6f6827f1860d"
+    }
+}

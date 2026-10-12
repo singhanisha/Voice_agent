@@ -1,0 +1,200 @@
+{
+  "schema_version": "2.0",
+  "id": "flowv2_905ba13e8ae1",
+  "agent_id": "08f26e11-9fa6-4e88-980a-0cf3e8e15810",
+  "agent_name": "Finance Assistant - Arjun",
+  "agent_type": "finance",
+  "status": "draft",
+  "runtime_mode": "shadow",
+  "default_locale": "en",
+  "supported_locales": [
+    "en",
+    "hi",
+    "mr"
+  ],
+  "start_node_id": "start",
+  "global_prompt": "You are a compliant finance advisory voice agent.\n\nPrimary goal:\nUnderstand the customer's interest in financial products such as personal loans, business loans, credit cards, insurance, or investments and qualify them for a human advisor.\n\nConversation style:\nBe calm, trustworthy, and precise. Ask one question at a time. Avoid pressure tactics. Keep the conversation short and respectful.\n\nDiscovery questions:\n1. Ask which financial product they are interested in.\n2. Ask the purpose, required amount, or preferred plan.\n3. Ask broad eligibility details only when appropriate, such as income range or employment type.\n4. Ask their timeline for taking a decision.\n5. Ask for permission to arrange a callback from an advisor.\n\nCompliance rules:\nDo not guarantee approval, returns, interest rates, tax benefits, or eligibility. Do not collect sensitive data such as OTPs, full card numbers, passwords, bank PINs, Aadhaar numbers, or account login details.\n\nFinal outcome:\nSummarize the customer's need and confirm that an authorized advisor will follow up.",
+  "slots": [
+    {
+      "id": "interested",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "product_interest",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "income_range",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "loan_amount",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "timeline",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "callback",
+      "required": true,
+      "source": "conversation"
+    }
+  ],
+  "intents": [
+    {
+      "id": "confirm",
+      "examples": [
+        "yes",
+        "okay",
+        "sure"
+      ]
+    },
+    {
+      "id": "deny",
+      "examples": [
+        "no",
+        "not interested"
+      ]
+    },
+    {
+      "id": "unclear",
+      "examples": [
+        "hmm",
+        "repeat"
+      ]
+    },
+    {
+      "id": "provide_info",
+      "examples": [
+        "my budget is 50 lakh"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "label": "Greeting",
+      "response": {
+        "en": "Hello, this is Finance Assistant - Arjun. Am I speaking with {{name}}?"
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "discovery",
+      "type": "slot_collection",
+      "label": "Discovery",
+      "collects": [
+        "interested",
+        "product_interest",
+        "income_range",
+        "loan_amount",
+        "timeline",
+        "callback"
+      ],
+      "response": {
+        "en": "Could you share a little about what you are looking for?"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "confirm",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "fallback",
+      "type": "fallback",
+      "label": "Clarify",
+      "response": {
+        "en": "Sorry, I did not catch that clearly. Could you repeat it once?"
+      },
+      "fallback": {
+        "max_attempts": 2,
+        "escalation_target": "end"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "discovery"
+        },
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        }
+      ]
+    },
+    {
+      "id": "confirm_followup",
+      "type": "message",
+      "label": "Confirm Follow-up",
+      "response": {
+        "en": "Thanks. I will have the team follow up with the right details."
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "end"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "label": "End",
+      "response": {
+        "en": "Thank you. Have a good day."
+      },
+      "transitions": []
+    }
+  ],
+  "metadata": {
+    "source": "agent_metadata",
+    "source_language": "English",
+    "validation_required": true
+  },
+  "validation": {
+    "status": "valid",
+    "node_count": 5,
+    "terminal_count": 1
+  }
+}

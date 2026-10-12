@@ -1,0 +1,162 @@
+{
+  "schema_version": "2.0",
+  "id": "flowv2_403a0d802e10",
+  "agent_id": "b0f56198-5c25-4835-98ca-ed941d230378",
+  "agent_name": "Aisha",
+  "agent_type": "finance",
+  "status": "draft",
+  "runtime_mode": "shadow",
+  "default_locale": "en",
+  "supported_locales": [
+    "en",
+    "hi",
+    "mr"
+  ],
+  "start_node_id": "start",
+  "global_prompt": "You are Aisha, a friendly and professional life insurance advisor. Keep your tone warm, trustworthy, and concise. Ask one question at a time, never repeat information already given, and never promise approvals or exact premiums.",
+  "slots": [],
+  "intents": [
+    {
+      "id": "confirm",
+      "examples": [
+        "yes",
+        "okay",
+        "sure"
+      ]
+    },
+    {
+      "id": "deny",
+      "examples": [
+        "no",
+        "not interested"
+      ]
+    },
+    {
+      "id": "unclear",
+      "examples": [
+        "hmm",
+        "repeat"
+      ]
+    },
+    {
+      "id": "provide_info",
+      "examples": [
+        "my budget is 50 lakh"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "label": "Greeting",
+      "response": {
+        "en": "Hello, this is Aisha. Am I speaking with {{name}}?"
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "discovery",
+      "type": "slot_collection",
+      "label": "Discovery",
+      "collects": [],
+      "response": {
+        "en": "Could you share a little about what you are looking for?"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "confirm",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "fallback",
+      "type": "fallback",
+      "label": "Clarify",
+      "response": {
+        "en": "Sorry, I did not catch that clearly. Could you repeat it once?"
+      },
+      "fallback": {
+        "max_attempts": 2,
+        "escalation_target": "end"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "discovery"
+        },
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        }
+      ]
+    },
+    {
+      "id": "confirm_followup",
+      "type": "message",
+      "label": "Confirm Follow-up",
+      "response": {
+        "en": "Thanks. I will have the team follow up with the right details."
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "end"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "label": "End",
+      "response": {
+        "en": "Thank you. Have a good day."
+      },
+      "transitions": []
+    }
+  ],
+  "metadata": {
+    "source": "agent_metadata",
+    "source_language": "Hindi",
+    "validation_required": true
+  },
+  "validation": {
+    "status": "valid",
+    "node_count": 5,
+    "terminal_count": 1
+  }
+}

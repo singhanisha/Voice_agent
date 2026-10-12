@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "id": "flowv2_60eea8874a32",
+  "id": "flowv2_81ecc5a64e2f",
   "agent_id": "f563e102-4d9a-462f-8f7d-1d0478e90f24",
   "agent_name": "Real Estate Sales - Pascal",
   "agent_type": "real_estate_sales",
@@ -82,7 +82,7 @@
       "type": "message",
       "label": "Greeting",
       "response": {
-        "en": "Hello, this is Real Estate Sales - Pascal. Am I speaking with {{name}}?"
+        "en": "Hello, this is Real Estate Sales - Pascal. Can I speak with you?"
       },
       "transitions": [
         {

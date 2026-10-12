@@ -1,0 +1,162 @@
+{
+  "schema_version": "2.0",
+  "id": "flowv2_0453df8b5dcd",
+  "agent_id": "9cbfabe5-b1db-400d-9755-db32bf39ce2f",
+  "agent_name": "Supriya",
+  "agent_type": "finance",
+  "status": "draft",
+  "runtime_mode": "shadow",
+  "default_locale": "en",
+  "supported_locales": [
+    "en",
+    "hi",
+    "mr"
+  ],
+  "start_node_id": "start",
+  "global_prompt": "You are Supriya, a friendly travel assistant calling a customer to plan a trip. Keep responses short, ask one question at a time, and never repeat information already provided. If the customer is not interested, politely end the call.",
+  "slots": [],
+  "intents": [
+    {
+      "id": "confirm",
+      "examples": [
+        "yes",
+        "okay",
+        "sure"
+      ]
+    },
+    {
+      "id": "deny",
+      "examples": [
+        "no",
+        "not interested"
+      ]
+    },
+    {
+      "id": "unclear",
+      "examples": [
+        "hmm",
+        "repeat"
+      ]
+    },
+    {
+      "id": "provide_info",
+      "examples": [
+        "my budget is 50 lakh"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "label": "Greeting",
+      "response": {
+        "en": "Hello, this is Supriya. Am I speaking with {{name}}?"
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "discovery",
+      "type": "slot_collection",
+      "label": "Discovery",
+      "collects": [],
+      "response": {
+        "en": "Could you share a little about what you are looking for?"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "confirm",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "fallback",
+      "type": "fallback",
+      "label": "Clarify",
+      "response": {
+        "en": "Sorry, I did not catch that clearly. Could you repeat it once?"
+      },
+      "fallback": {
+        "max_attempts": 2,
+        "escalation_target": "end"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "discovery"
+        },
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        }
+      ]
+    },
+    {
+      "id": "confirm_followup",
+      "type": "message",
+      "label": "Confirm Follow-up",
+      "response": {
+        "en": "Thanks. I will have the team follow up with the right details."
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "end"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "label": "End",
+      "response": {
+        "en": "Thank you. Have a good day."
+      },
+      "transitions": []
+    }
+  ],
+  "metadata": {
+    "source": "agent_metadata",
+    "source_language": "English",
+    "validation_required": true
+  },
+  "validation": {
+    "status": "valid",
+    "node_count": 5,
+    "terminal_count": 1
+  }
+}

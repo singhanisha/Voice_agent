@@ -4896,8 +4896,6 @@ async def get_agent_runtime_schema(agent_id: str, request: Request):
     except (OSError, json.JSONDecodeError) as exc:
         raise HTTPException(status_code=500, detail=f"Could not read agent schema: {exc}")
     return {"schema": schema, "agent": agent}
- 
-
 
 @app.get("/api/clients/resolve")
 async def resolve_client_by_email(email: str):
@@ -7346,11 +7344,13 @@ def _ensure_frame_attrs(frame: Frame) -> None:
 class VoiceLiveSink(FrameProcessor):
     """Sends pipeline output back to the browser WebSocket."""
 
-    def __init__(self, websocket: WebSocket, on_transcript=None, recorder=None):
+    def __init__(self, websocket: WebSocket, on_transcript=None, recorder=None, state_manager=None):
         super().__init__()
         self.ws = websocket
         self.on_transcript = on_transcript
         self.recorder = recorder
+        # Optional: lets us tell the browser which flow node is speaking.
+        self.state_manager = state_manager
 
         # Track which generation was already signalled to frontend.
         self._last_signalled_gen_id = -1
@@ -7561,6 +7561,14 @@ class VoiceLiveSink(FrameProcessor):
                         "speaker": speaker,
                         "text": frame.text,
                     }
+                    if is_agent and self.state_manager is not None:
+                        try:
+                            _sm = self.state_manager
+                            _node = _sm.nodes.get(_sm.current_node_id) or {}
+                            payload["node_id"] = _sm.current_node_id
+                            payload["node_name"] = _node.get("name") or _sm.current_node_id
+                        except Exception:
+                            pass
 
                     await self.ws.send_text(
                         json.dumps(payload)
@@ -7674,7 +7682,7 @@ async def websocket_voice_live(websocket: WebSocket):
     llm.state_manager.conversation_data["lead_name"] = lead_name
     llm.history.clear()                                   # Fix: flush any prior in-memory history
     tts    = RealEstateTTSProcessor(turn_state=turn_state, agent_id=agent_id)
-    sink   = VoiceLiveSink(websocket)
+    sink   = VoiceLiveSink(websocket, state_manager=llm.state_manager)
 
     pipeline    = Pipeline([source, stt, llm, tts, sink])
     runner      = PipelineRunner()
@@ -8181,5 +8189,3 @@ if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=PORT, reload=False)
 
 # Dummy comment to trigger uvicorn reload trigger 123
-
-

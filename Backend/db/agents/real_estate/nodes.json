@@ -33,7 +33,7 @@
         "intent_triggers": [
             "confirm_identity"
         ],
-        "response": "Do you have two minutes right now? I came across something that might actually be relevant for you."
+        "response": "Do you have two minutes right now?"
     },
     {
         "name": "Ask Intent",

@@ -15,6 +15,13 @@ export default function TalkLiveModal({ agent, userName, onClose }) {
   const { connect, disconnect, isConnected, statusText, transcripts, clearTranscripts } =
     useVoiceSocket(agent?.id, agent?.client_id);
 
+  const trail = [];
+  transcripts.forEach((m) => {
+    if (m.speaker === 'agent' && m.node_id && trail[trail.length - 1]?.id !== m.node_id) {
+      trail.push({ id: m.node_id, name: m.node_name || m.node_id });
+    }
+  });
+
   // Always hang up + release the mic when the modal closes/unmounts.
   useEffect(() => () => disconnect(), [disconnect]);
 
@@ -64,6 +71,18 @@ export default function TalkLiveModal({ agent, userName, onClose }) {
                     <div className="small text-muted mt-3">
                       Allow microphone access when your browser asks for it.
                     </div>
+                    {trail.length > 0 && (
+                      <div className="text-start mt-3">
+                        <div className="small fw-bold mb-1">Flow path</div>
+                        <div className="d-flex flex-wrap gap-1">
+                          {trail.map((t, i) => (
+                            <span key={`${t.id}-${i}`} className={`badge rounded-pill ${i === trail.length - 1 ? 'bg-success' : 'bg-light text-dark border'}`}>
+                              {i > 0 ? '→ ' : ''}{t.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -91,6 +110,11 @@ export default function TalkLiveModal({ agent, userName, onClose }) {
                             {isAgent ? <><Bot size={12} /> Agent</> : <><User size={12} /> You</>}
                           </div>
                           <div className="small">{msg.text}</div>
+                          {isAgent && msg.node_name && (
+                            <span className="badge rounded-pill bg-light text-dark border mt-1" style={{ fontSize: 10 }}>
+                              Node: {msg.node_name}
+                            </span>
+                          )}
                         </div>
                       );
                     })}

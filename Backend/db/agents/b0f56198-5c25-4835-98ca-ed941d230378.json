@@ -1,0 +1,459 @@
+{
+    "agent_name": "Aisha",
+    "conversationFlow": {
+        "start_node_id": "node-greeting",
+        "global_prompt": "You are Aisha, a friendly and professional life insurance advisor. Keep your tone warm, trustworthy, and concise. Ask one question at a time, never repeat information already given, and never promise approvals or exact premiums.",
+        "nodes": [
+            {
+                "id": "root_greeting",
+                "name": "Initial Greeting",
+                "type": "conversation",
+                "intent_triggers": [
+                    "call_connected"
+                ],
+                "edges": [
+                    {
+                        "id": "to_discovery",
+                        "condition": "user responds",
+                        "destination_node_id": "root_greeting"
+                    }
+                ],
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Greet the user warmly as Aisha and confirm identity using the lead name."
+                },
+                "response": "Hello, this is Aisha from the Finance advisory team. Am I speaking with {{name}}?"
+            },
+            {
+                "id": "node-greeting",
+                "name": "Greeting",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Greet the caller politely, introduce yourself as a life insurance advisor, and ask if they have a moment to talk."
+                },
+                "response": "Good morning, this is Aisha, your life insurance advisor. Do you have a moment to discuss your coverage needs?",
+                "edges": [
+                    {
+                        "condition": "caller ready",
+                        "id": "edge-ready",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller says they are ready to talk."
+                        },
+                        "destination_node_id": "node-ask-name"
+                    },
+                    {
+                        "condition": "caller not ready",
+                        "id": "edge-not-ready",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller says they are not ready or busy."
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-name",
+                "name": "Ask Name",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for the caller's full name."
+                },
+                "response": "May I have your full name, please?",
+                "collects": "name",
+                "edges": [
+                    {
+                        "id": "edge-to-node-custom-6636",
+                        "condition": "user responds",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user responds"
+                        },
+                        "destination_node_id": "node-custom-6636"
+                    }
+                ]
+            },
+            {
+                "id": "node-custom-6636",
+                "name": "Ask Age",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "May I know your age?"
+                },
+                "response": "May I know your age?",
+                "edges": [
+                    {
+                        "id": "edge-21838",
+                        "condition": "user responds",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user responds"
+                        },
+                        "destination_node_id": "node-ask-city"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-city",
+                "name": "Ask City",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask which city the caller lives in."
+                },
+                "response": "Which city do you currently live in?",
+                "collects": "city",
+                "edges": [
+                    {
+                        "condition": "city provided",
+                        "id": "edge-city",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller states their city."
+                        },
+                        "destination_node_id": "node-ask-occupation"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-occupation",
+                "name": "Ask Occupation",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for the caller's occupation."
+                },
+                "response": "What is your occupation?",
+                "collects": "occupation",
+                "edges": [
+                    {
+                        "condition": "occupation provided",
+                        "id": "edge-occupation",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller gives their occupation."
+                        },
+                        "destination_node_id": "node-ask-dependents"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-dependents",
+                "name": "Ask Dependents",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask how many family members or dependents the caller has."
+                },
+                "response": "How many family members or dependents do you have?",
+                "collects": "dependents",
+                "edges": [
+                    {
+                        "condition": "dependents provided",
+                        "id": "edge-dependents",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller states number of dependents."
+                        },
+                        "destination_node_id": "node-ask-existing-coverage"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-existing-coverage",
+                "name": "Ask Existing Coverage",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask if the caller already has any life insurance coverage."
+                },
+                "response": "Do you currently have any life insurance coverage?",
+                "collects": "existing_coverage",
+                "edges": [
+                    {
+                        "condition": "coverage answer",
+                        "id": "edge-existing-coverage",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller answers yes or no."
+                        },
+                        "destination_node_id": "node-ask-coverage-amount"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-coverage-amount",
+                "name": "Ask Coverage Amount",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for the approximate coverage amount the caller is looking for."
+                },
+                "response": "What approximate coverage amount are you looking for?",
+                "collects": "coverage_amount",
+                "edges": [
+                    {
+                        "condition": "coverage clear",
+                        "id": "edge-coverage-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller gives a clear coverage amount."
+                        },
+                        "destination_node_id": "node-ask-policy-duration"
+                    },
+                    {
+                        "condition": "coverage unclear",
+                        "id": "edge-coverage-unclear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Coverage amount is unclear or not understood."
+                        },
+                        "destination_node_id": "node-fallback-coverage"
+                    }
+                ]
+            },
+            {
+                "id": "node-fallback-coverage",
+                "name": "Fallback Coverage",
+                "type": "fallback",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Politely ask the caller to repeat their coverage amount in a clearer way."
+                },
+                "response": "Sorry, I didn\u2019t catch that. Could you tell me the coverage amount again?",
+                "edges": [
+                    {
+                        "condition": "coverage clarified",
+                        "id": "edge-coverage-clarified",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller provides a clear coverage amount."
+                        },
+                        "destination_node_id": "node-ask-policy-duration"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-policy-duration",
+                "name": "Ask Policy Duration",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask how long the caller would like the policy to provide coverage."
+                },
+                "response": "How many years would you like the policy to cover?",
+                "collects": "policy_duration",
+                "edges": [
+                    {
+                        "condition": "duration provided",
+                        "id": "edge-duration",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller states desired policy duration."
+                        },
+                        "destination_node_id": "node-ask-premium-budget"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-premium-budget",
+                "name": "Ask Premium Budget",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for the caller\u2019s approximate annual premium budget."
+                },
+                "response": "What is your approximate annual premium budget?",
+                "collects": "premium_budget",
+                "edges": [
+                    {
+                        "condition": "budget provided",
+                        "id": "edge-budget",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller gives their premium budget."
+                        },
+                        "destination_node_id": "node-ask-reason"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-reason",
+                "name": "Ask Reason",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask why the caller is seeking life insurance."
+                },
+                "response": "What is the main reason you\u2019re looking for life insurance?",
+                "collects": "reason",
+                "edges": [
+                    {
+                        "condition": "reason provided",
+                        "id": "edge-reason",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller states their reason."
+                        },
+                        "destination_node_id": "node-confirm-details"
+                    }
+                ]
+            },
+            {
+                "id": "node-confirm-details",
+                "name": "Confirm Details",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Summarize all collected information and ask for confirmation."
+                },
+                "response": "Just to confirm: you are {{name}}, {{age}} years old, live in {{city}}, work as a {{occupation}}, have {{dependents}} dependents, currently have {{existing_coverage}} coverage, looking for about {{coverage_amount}} coverage for {{policy_duration}} years, with a budget of {{premium_budget}} per year, mainly for {{reason}}. Is that correct?",
+                "edges": [
+                    {
+                        "condition": "confirmed",
+                        "id": "edge-confirmed",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller confirms all details are correct."
+                        },
+                        "destination_node_id": "node-provide-options"
+                    },
+                    {
+                        "condition": "needs change",
+                        "id": "edge-change",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller says one or more details need to be changed."
+                        },
+                        "destination_node_id": "node-ask-change"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-change",
+                "name": "Ask Change",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask which detail the caller wants to change."
+                },
+                "response": "Which detail would you like to change?",
+                "collects": "change_detail",
+                "edges": [
+                    {
+                        "condition": "detail identified",
+                        "id": "edge-detail",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller specifies the detail to change."
+                        },
+                        "destination_node_id": "node-update-detail"
+                    }
+                ]
+            },
+            {
+                "id": "node-update-detail",
+                "name": "Update Detail",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for the new value of the specified detail."
+                },
+                "response": "Got it. What is the new {{change_detail}}?",
+                "collects": "new_value",
+                "edges": [
+                    {
+                        "condition": "value provided",
+                        "id": "edge-value",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller provides the new value."
+                        },
+                        "destination_node_id": "node-update-slot"
+                    }
+                ]
+            },
+            {
+                "id": "node-update-slot",
+                "name": "Update Slot",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Update the stored slot with the new value and confirm the updated information."
+                },
+                "response": "Updated {{change_detail}} to {{new_value}}. Is everything else correct?",
+                "edges": [
+                    {
+                        "condition": "confirmed",
+                        "id": "edge-final-confirm",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller confirms all details are now correct."
+                        },
+                        "destination_node_id": "node-provide-options"
+                    },
+                    {
+                        "condition": "needs more change",
+                        "id": "edge-more-change",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller wants to change another detail."
+                        },
+                        "destination_node_id": "node-ask-change"
+                    }
+                ]
+            },
+            {
+                "id": "node-provide-options",
+                "name": "Provide Options",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Explain that suitable insurance options can be discussed based on their requirements."
+                },
+                "response": "Based on what you\u2019ve shared, we can explore several suitable options. I\u2019ll share general information and we can discuss details further if you\u2019d like.",
+                "edges": [
+                    {
+                        "condition": "end conversation",
+                        "id": "edge-end",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller is satisfied and wants to end the call."
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-goodbye",
+                "name": "Goodbye",
+                "type": "end",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "End the conversation politely and warmly."
+                },
+                "response": "Thank you for your time, {{name}}. Have a wonderful day!",
+                "edges": []
+            }
+        ]
+    },
+    "voice_id": "maya",
+    "global_prompt": "You are Aisha, a friendly and professional life insurance advisor. Keep your tone warm, trustworthy, and concise. Ask one question at a time, never repeat information already given, and never promise approvals or exact premiums.",
+    "tts_provider": "smallest",
+    "stt_provider": "smallest",
+    "provider_config": {
+        "stt_provider": "smallest",
+        "tts_provider": "smallest",
+        "cartesia_voice_id": "95d51f79-c397-46f9-b49a-23763d3eaa2d",
+        "parler_description": ""
+    },
+    "agent_metadata": {
+        "agent_type": "finance",
+        "assigned_email": "laxmi@gmail.com",
+        "client_id": "user-6f6827f1860d"
+    }
+}

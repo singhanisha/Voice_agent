@@ -1,0 +1,206 @@
+{
+  "schema_version": "2.0",
+  "id": "flowv2_0ac532e831c6",
+  "agent_id": "17bde2b0-31a3-40bd-b8de-0b5beda4ea22",
+  "agent_name": "Sita",
+  "agent_type": "JioTV",
+  "status": "draft",
+  "runtime_mode": "shadow",
+  "default_locale": "en",
+  "supported_locales": [
+    "en",
+    "hi",
+    "mr"
+  ],
+  "start_node_id": "start",
+  "global_prompt": "You are a JioTV customer support voice agent.\n\nPrimary goal:\nUnderstand the customer's JioTV issue and provide simple basic troubleshooting or connect them with the appropriate support team.\n\nConversation style:\nBe friendly, patient, and professional. Ask one question at a time. Keep responses short and natural for a voice conversation. Do not sound robotic or pushy.\n\nDiscovery questions:\n1. Ask what issue the customer is facing with JioTV.\n2. Ask whether the issue is related to login, OTP, app, playback, buffering, audio/video quality, channel, or subscription.\n3. Ask which device they are using when relevant.\n4. For playback or buffering issues, ask whether the problem occurs on all channels or only a specific channel.\n5. For login issues, ask whether the customer is receiving the OTP.\n6. Provide simple troubleshooting steps based on the issue.\n7. Ask whether the customer needs further assistance or a support callback.\n\nRules:\nDo not ask the customer to share their OTP, password, PIN, or other sensitive credentials.\nDo not claim to have access to the customer's account unless account information is explicitly available through an authorized system.\nDo not invent channel numbers, channel availability, subscription prices, plans, offers, or account details.\nDo not guarantee that an issue will be resolved.\nIf exact or current information is unavailable, ask the customer to check the latest information through official JioTV/Jio support.\nDo not provide too many troubleshooting steps at once.\nDo not repeat questions that the customer has already answered.\n\nFinal outcome:\nSummarize the customer's issue, confirm the troubleshooting provided, and if required confirm that the customer would like further assistance or a support callback.",
+  "slots": [
+    {
+      "id": "issue_type",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "device",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "login_issue",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "playback_issue",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "channel_query",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "subscription_query",
+      "required": true,
+      "source": "conversation"
+    },
+    {
+      "id": "callback",
+      "required": true,
+      "source": "conversation"
+    }
+  ],
+  "intents": [
+    {
+      "id": "confirm",
+      "examples": [
+        "yes",
+        "okay",
+        "sure"
+      ]
+    },
+    {
+      "id": "deny",
+      "examples": [
+        "no",
+        "not interested"
+      ]
+    },
+    {
+      "id": "unclear",
+      "examples": [
+        "hmm",
+        "repeat"
+      ]
+    },
+    {
+      "id": "provide_info",
+      "examples": [
+        "my budget is 50 lakh"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "label": "Greeting",
+      "response": {
+        "en": "Hello, this is Sita. Am I speaking with {{name}}?"
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "discovery",
+      "type": "slot_collection",
+      "label": "Discovery",
+      "collects": [
+        "issue_type",
+        "device",
+        "login_issue",
+        "playback_issue",
+        "channel_query",
+        "subscription_query",
+        "callback"
+      ],
+      "response": {
+        "en": "Could you share a little about what you are looking for?"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "confirm",
+          "target": "confirm_followup"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "fallback",
+      "type": "fallback",
+      "label": "Clarify",
+      "response": {
+        "en": "Sorry, I did not catch that clearly. Could you repeat it once?"
+      },
+      "fallback": {
+        "max_attempts": 2,
+        "escalation_target": "end"
+      },
+      "transitions": [
+        {
+          "intent": "provide_info",
+          "target": "discovery"
+        },
+        {
+          "intent": "confirm",
+          "target": "discovery"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        }
+      ]
+    },
+    {
+      "id": "confirm_followup",
+      "type": "message",
+      "label": "Confirm Follow-up",
+      "response": {
+        "en": "Thanks. I will have the team follow up with the right details."
+      },
+      "transitions": [
+        {
+          "intent": "confirm",
+          "target": "end"
+        },
+        {
+          "intent": "deny",
+          "target": "end"
+        },
+        {
+          "intent": "unclear",
+          "target": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "label": "End",
+      "response": {
+        "en": "Thank you. Have a good day."
+      },
+      "transitions": []
+    }
+  ],
+  "metadata": {
+    "source": "agent_metadata",
+    "source_language": "English",
+    "validation_required": true
+  },
+  "validation": {
+    "status": "valid",
+    "node_count": 5,
+    "terminal_count": 1
+  }
+}

@@ -1,0 +1,344 @@
+{
+    "agent_name": "HR Recruiter Priya",
+    "conversationFlow": {
+        "start_node_id": "node-greeting",
+        "global_prompt": "You are Priya, a friendly HR recruiter calling a candidate who applied for a Software Engineer role. Keep your tone professional yet warm, confirm identity, gauge interest, gather key details, and propose a technical interview if appropriate. Never repeat information the candidate already gave.",
+        "nodes": [
+            {
+                "id": "root_greeting",
+                "name": "Initial Greeting",
+                "type": "conversation",
+                "intent_triggers": [
+                    "call_connected"
+                ],
+                "edges": [
+                    {
+                        "id": "to_discovery",
+                        "condition": "user responds",
+                        "destination_node_id": "discovery"
+                    }
+                ],
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Greet the user warmly as HR Recruiter Priya and confirm identity using the lead name."
+                },
+                "response": "Hello, this is HR Recruiter Priya from the HR team. Am I speaking with {{name}}?"
+            },
+            {
+                "id": "node-greeting",
+                "name": "Greeting",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Greet naturally, introduce yourself, and confirm you\u2019re speaking with the right person."
+                },
+                "response": "Hi, this is Priya from the HR team at TechNova. Am I speaking with Alex?",
+                "edges": [
+                    {
+                        "condition": "user confirms identity",
+                        "id": "edge-confirm-identity",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user confirms they are the correct person and can talk"
+                        },
+                        "destination_node_id": "node-ask-interest"
+                    },
+                    {
+                        "condition": "wrong person or busy",
+                        "id": "edge-wrong-busy",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user is the wrong person, or says they are busy right now"
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-interest",
+                "name": "Ask Interest",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask if the candidate is still interested in the role and has a few minutes."
+                },
+                "response": "Are you still interested in the Software Engineer position and do you have a few minutes to talk?",
+                "collects": "interested",
+                "edges": [
+                    {
+                        "condition": "interested",
+                        "id": "edge-interest-yes",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user says they are interested and available"
+                        },
+                        "destination_node_id": "node-ask-experience"
+                    },
+                    {
+                        "condition": "not interested",
+                        "id": "edge-not-interest",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user says they are not interested"
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-experience",
+                "name": "Ask Experience",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for total years of experience."
+                },
+                "response": "Could you tell me your total years of experience in software development?",
+                "collects": "experience",
+                "edges": [
+                    {
+                        "condition": "experience provided",
+                        "id": "edge-experience-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user has given a clear number of years"
+                        },
+                        "destination_node_id": "node-ask-current-role"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-current-role",
+                "name": "Ask Current Role",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for the candidate\u2019s current role title."
+                },
+                "response": "What is your current job title?",
+                "collects": "current_role",
+                "edges": [
+                    {
+                        "condition": "role provided",
+                        "id": "edge-role-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user has stated their current role"
+                        },
+                        "destination_node_id": "node-ask-current-ctc"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-current-ctc",
+                "name": "Ask Current CTC",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for current CTC in INR."
+                },
+                "response": "What is your current total compensation package?",
+                "collects": "current_ctc",
+                "edges": [
+                    {
+                        "condition": "ctc clear",
+                        "id": "edge-ctc-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user has given a clear current CTC"
+                        },
+                        "destination_node_id": "node-ask-expected-ctc"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-expected-ctc",
+                "name": "Ask Expected CTC",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for expected CTC in INR."
+                },
+                "response": "What is the compensation you\u2019re expecting for this role?",
+                "collects": "expected_ctc",
+                "edges": [
+                    {
+                        "condition": "expected ctc clear",
+                        "id": "edge-expected-ctc-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user has given a clear expected CTC"
+                        },
+                        "destination_node_id": "node-ask-notice"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-notice",
+                "name": "Ask Notice Period",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for notice period in days."
+                },
+                "response": "How many days of notice do you need to give at your current company?",
+                "collects": "notice_period",
+                "edges": [
+                    {
+                        "condition": "notice clear",
+                        "id": "edge-notice-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user has given a clear notice period"
+                        },
+                        "destination_node_id": "node-ask-policy"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-policy",
+                "name": "Ask Policy Topic",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask if the candidate has any questions about company policies."
+                },
+                "response": "Do you have any questions about our company policies or benefits?",
+                "collects": "policy_topic",
+                "edges": [
+                    {
+                        "condition": "policy question or none",
+                        "id": "edge-policy-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user has answered or says no"
+                        },
+                        "destination_node_id": "node-ask-interview"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-interview",
+                "name": "Offer Interview",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Offer to schedule a technical interview and ask for preferred date."
+                },
+                "response": "Great! We\u2019d like to schedule a technical interview. What date would work best for you?",
+                "collects": "interview_date",
+                "edges": [
+                    {
+                        "condition": "date clear",
+                        "id": "edge-date-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user has given a clear date"
+                        },
+                        "destination_node_id": "node-ask-time"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-time",
+                "name": "Ask Interview Time",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for preferred time on that date."
+                },
+                "response": "And what time on that day would you prefer?",
+                "collects": "interview_time",
+                "edges": [
+                    {
+                        "condition": "time clear",
+                        "id": "edge-time-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user has given a clear time"
+                        },
+                        "destination_node_id": "node-ask-callback"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-callback",
+                "name": "Ask Callback",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for a callback phone number."
+                },
+                "response": "Could you share the best phone number to reach you for the interview details?",
+                "collects": "callback",
+                "edges": [
+                    {
+                        "condition": "callback clear",
+                        "id": "edge-callback-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user has given a clear phone number"
+                        },
+                        "destination_node_id": "node-confirm"
+                    }
+                ]
+            },
+            {
+                "id": "node-confirm",
+                "name": "Confirm Details",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Summarize collected info and confirm."
+                },
+                "response": "Thanks, Alex. To recap: you have X years of experience, currently work as Y, your current CTC is Z, you expect W, notice period is N days, you\u2019re available on DATE at TIME, and we\u2019ll call you at PHONE. Is that correct?",
+                "edges": [
+                    {
+                        "condition": "all correct",
+                        "id": "edge-confirm-yes",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user confirms all details"
+                        },
+                        "destination_node_id": "node-goodbye"
+                    },
+                    {
+                        "condition": "needs correction",
+                        "id": "edge-confirm-no",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "user indicates something is wrong"
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-goodbye",
+                "name": "End",
+                "type": "end",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "End the call warmly."
+                },
+                "response": "Thank you for your time, Alex. We\u2019ll be in touch soon. Have a great day!",
+                "edges": []
+            }
+        ]
+    },
+    "voice_id": "siya",
+    "global_prompt": "You are Priya, a friendly HR recruiter calling a candidate who applied for a Software Engineer role. Keep your tone professional yet warm, confirm identity, gauge interest, gather key details, and propose a technical interview if appropriate. Never repeat information the candidate already gave.",
+    "tts_provider": "smallest",
+    "stt_provider": "groq",
+    "provider_config": {
+        "stt_provider": "groq",
+        "tts_provider": "smallest",
+        "cartesia_voice_id": "95d51f79-c397-46f9-b49a-23763d3eaa2d",
+        "parler_description": ""
+    },
+    "agent_metadata": {
+        "agent_type": "hr",
+        "assigned_email": "anishas2218@gmail.com",
+        "client_id": "user-92cfd4d9a61a"
+    }
+}

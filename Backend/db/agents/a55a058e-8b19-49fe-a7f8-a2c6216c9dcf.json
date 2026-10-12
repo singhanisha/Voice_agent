@@ -1,0 +1,297 @@
+{
+    "agent_name": "Riya",
+    "conversationFlow": {
+        "start_node_id": "node-greeting",
+        "global_prompt": "You are Riya, a friendly personal loan advisor at QuickFin Finance. Keep responses short, polite, and never promise approval or exact rates. Your goal is to collect name, income, employment type, loan amount, and purpose, then confirm and schedule a specialist call.",
+        "nodes": [
+            {
+                "id": "root_greeting",
+                "name": "Initial Greeting",
+                "type": "conversation",
+                "intent_triggers": [
+                    "call_connected"
+                ],
+                "edges": [
+                    {
+                        "id": "to_discovery",
+                        "condition": "user responds",
+                        "destination_node_id": "root_greeting"
+                    }
+                ],
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Greet the user warmly as Riya and confirm identity using the lead name."
+                },
+                "response": "Hello, this is Riya from the Finance advisory team. Am I speaking with {{name}}?"
+            },
+            {
+                "id": "node-greeting",
+                "name": "Greeting",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Greet warmly, introduce yourself, and ask if they have a minute to talk."
+                },
+                "response": "Hi, this is Riya from QuickFin Finance. Do you have few minutes?",
+                "edges": [
+                    {
+                        "condition": "has minute",
+                        "id": "edge-has-minute",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User says they have a minute."
+                        },
+                        "destination_node_id": "node-ask-name"
+                    },
+                    {
+                        "condition": "busy or not interested",
+                        "id": "edge-no-minute",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User says they are busy or not interested."
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-name",
+                "name": "Ask Name",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for the caller's full name."
+                },
+                "response": "May I have your full name?",
+                "collects": "full_name",
+                "edges": [
+                    {
+                        "condition": "name provided",
+                        "id": "edge-name-provided",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User provides their full name."
+                        },
+                        "destination_node_id": "node-custom-74158"
+                    }
+                ]
+            },
+            {
+                "id": "node-custom-74158",
+                "name": "Ask City",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Which city do you live in?"
+                },
+                "response": "Which city do you live in?",
+                "edges": [
+                    {
+                        "id": "edge-node-custom-74158",
+                        "condition": "Caller responds.",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Caller responds."
+                        },
+                        "destination_node_id": "node-ask-income"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-income",
+                "name": "Ask Income",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for monthly income."
+                },
+                "response": "What is your approximate monthly income?",
+                "collects": "monthly_income",
+                "edges": [
+                    {
+                        "condition": "income provided",
+                        "id": "edge-income-provided",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User gives a clear monthly income."
+                        },
+                        "destination_node_id": "node-ask-employment"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-employment",
+                "name": "Ask Employment",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask whether they are salaried or self\u2011employed."
+                },
+                "response": "Are you salaried or self\u2011employed?",
+                "collects": "employment_type",
+                "edges": [
+                    {
+                        "condition": "employment clarified",
+                        "id": "edge-employment-provided",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User states salaried or self\u2011employed."
+                        },
+                        "destination_node_id": "node-ask-loan-amount"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-loan-amount",
+                "name": "Ask Loan Amount",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for the loan amount they need."
+                },
+                "response": "How much loan amount are you looking for?",
+                "collects": "loan_amount",
+                "edges": [
+                    {
+                        "condition": "amount clear",
+                        "id": "edge-amount-clear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User provides a clear loan amount."
+                        },
+                        "destination_node_id": "node-ask-purpose"
+                    },
+                    {
+                        "condition": "amount unclear",
+                        "id": "edge-amount-unclear",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User's loan amount answer is unclear."
+                        },
+                        "destination_node_id": "node-fallback-amount"
+                    }
+                ]
+            },
+            {
+                "id": "node-fallback-amount",
+                "name": "Fallback Amount",
+                "type": "fallback",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Politely ask the user to repeat the loan amount in a clearer way."
+                },
+                "response": "Sorry, I didn\u2019t catch that. Could you tell me the loan amount again?",
+                "edges": [
+                    {
+                        "condition": "amount clarified",
+                        "id": "edge-amount-clarified",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User now provides a clear loan amount."
+                        },
+                        "destination_node_id": "node-ask-purpose"
+                    }
+                ]
+            },
+            {
+                "id": "node-ask-purpose",
+                "name": "Ask Purpose",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Ask for the purpose of the loan."
+                },
+                "response": "What will you use the loan for?",
+                "collects": "loan_purpose",
+                "edges": [
+                    {
+                        "condition": "purpose provided",
+                        "id": "edge-purpose-provided",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User gives a clear loan purpose."
+                        },
+                        "destination_node_id": "node-confirm"
+                    }
+                ]
+            },
+            {
+                "id": "node-confirm",
+                "name": "Confirm Details",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Summarize collected info and ask for confirmation."
+                },
+                "response": "Just to confirm, you are ${full_name}, earn ${monthly_income} per month, are ${employment_type}, need a loan of ${loan_amount} for ${loan_purpose}. Is that correct?",
+                "edges": [
+                    {
+                        "condition": "confirmed",
+                        "id": "edge-confirmed",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User confirms all details."
+                        },
+                        "destination_node_id": "node-schedule"
+                    },
+                    {
+                        "condition": "needs correction",
+                        "id": "edge-correction",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "User says details are incorrect."
+                        },
+                        "destination_node_id": "node-ask-name"
+                    }
+                ]
+            },
+            {
+                "id": "node-schedule",
+                "name": "Schedule Call",
+                "type": "conversation",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "Inform that a specialist will call within 24 hours and say goodbye."
+                },
+                "response": "Great! A loan specialist will call you within 24 hours. Thank you for your time, have a wonderful day!",
+                "edges": [
+                    {
+                        "condition": "end",
+                        "id": "edge-end",
+                        "transition_condition": {
+                            "type": "prompt",
+                            "prompt": "Conversation ends."
+                        },
+                        "destination_node_id": "node-goodbye"
+                    }
+                ]
+            },
+            {
+                "id": "node-goodbye",
+                "name": "Goodbye",
+                "type": "end",
+                "instruction": {
+                    "type": "prompt",
+                    "text": "End the conversation politely."
+                },
+                "response": "Thank you for your time. Goodbye!",
+                "edges": []
+            }
+        ]
+    },
+    "voice_id": "dhruv",
+    "global_prompt": "You are Riya, a friendly personal loan advisor at QuickFin Finance. Keep responses short, polite, and never promise approval or exact rates. Your goal is to collect name, income, employment type, loan amount, and purpose, then confirm and schedule a specialist call.",
+    "tts_provider": "smallest",
+    "stt_provider": "smallest",
+    "provider_config": {
+        "stt_provider": "smallest",
+        "tts_provider": "smallest",
+        "cartesia_voice_id": "95d51f79-c397-46f9-b49a-23763d3eaa2d",
+        "parler_description": ""
+    },
+    "agent_metadata": {
+        "agent_type": "finance",
+        "assigned_email": "laxmi@gmail.com",
+        "client_id": "user-6f6827f1860d"
+    }
+}

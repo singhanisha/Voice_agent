@@ -13,7 +13,7 @@
         "intent_triggers": [
             "call_connected"
         ],
-        "response": "Hi, this is Riya from the HR team. Am I speaking with {{name}}?"
+        "response": "Hi, this is Riya from the HR team. Can I speak with you?"
     },
     {
         "id": "hr_availability",
@@ -224,9 +224,7 @@
             "text": "Acknowledge without pushing. Do not argue. Offer to keep their profile on file and ask if you may share the JD on WhatsApp for later. Keep it low-pressure."
         },
         "display_position": { "x": 1650, "y": -350 },
-        "intent_triggers": [
-            "not_interested"
-        ],
+        "intent_triggers": ["deny_interest"],
         "response": "Understood, no problem. Can I share the JD on WhatsApp in case something changes later?"
     },
     {
@@ -252,10 +250,7 @@
             "text": "They are busy or it's a wrong moment. Ask for a convenient day and time to call back. Keep it to one short question."
         },
         "display_position": { "x": 550, "y": 400 },
-        "intent_triggers": [
-            "busy",
-            "call_later"
-        ],
+        "intent_triggers": ["deny_time"],
         "response": "No problem at all. When would be a good time to call you back?",
         "collects": "callback_time",
         "expected_input_type": "any"
